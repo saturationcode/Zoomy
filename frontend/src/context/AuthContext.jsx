@@ -1,34 +1,68 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabase.js';
 
 const AuthContext = createContext(null);
 
-const STORAGE_KEY = 'zoomy_auth';
-
-function loadAuth() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+async function fetchProfile(userId) {
+  const { data } = await supabase
+    .from('profiles')
+    .select('username')
+    .eq('id', userId)
+    .single();
+  return data;
 }
 
 export function AuthProvider({ children }) {
-  const [auth, setAuth] = useState(loadAuth);
+  const [auth, setAuth] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = useCallback((token, user) => {
-    const data = { token, user };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    setAuth(data);
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        const profile = await fetchProfile(session.user.id);
+        setAuth({ user: { id: session.user.id, username: profile?.username } });
+      }
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        const profile = await fetchProfile(session.user.id);
+        setAuth({ user: { id: session.user.id, username: profile?.username } });
+      } else {
+        setAuth(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+  const register = useCallback(async (username, password) => {
+    const email = `${username}@zoomy.app`;
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) throw new Error(error.message);
+
+    if (data.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({ id: data.user.id, username });
+      if (profileError) throw new Error(profileError.message);
+    }
+  }, []);
+
+  const login = useCallback(async (username, password) => {
+    const email = `${username}@zoomy.app`;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw new Error('Неверное имя пользователя или пароль');
+  }, []);
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
     setAuth(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ auth, login, logout }}>
+    <AuthContext.Provider value={{ auth, loading, register, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

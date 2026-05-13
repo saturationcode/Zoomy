@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useSocket } from '../context/SocketContext.jsx';
+import { supabase } from '../lib/supabase.js';
 
 function avatarLetter(name) {
   return name ? name[0].toUpperCase() : '?';
@@ -13,17 +13,15 @@ function avatarColor(name) {
   return colors[Math.abs(hash) % colors.length];
 }
 
-function formatTime(ts) {
-  const d = new Date(ts * 1000);
-  return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+function formatTime(iso) {
+  return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 }
 
-function formatDate(ts) {
-  const d = new Date(ts * 1000);
+function formatDate(iso) {
+  const d = new Date(iso);
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
-
   if (d.toDateString() === today.toDateString()) return 'Сегодня';
   if (d.toDateString() === yesterday.toDateString()) return 'Вчера';
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
@@ -31,72 +29,98 @@ function formatDate(ts) {
 
 export default function ChatPage() {
   const { auth, logout } = useAuth();
-  const { socket, onlineUsers } = useSocket();
-
   const [users, setUsers] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const activeUserRef = useRef(null);
+
+  useEffect(() => { activeUserRef.current = activeUser; }, [activeUser]);
 
   // Load user list
   useEffect(() => {
-    fetch('/api/users', {
-      headers: { Authorization: `Bearer ${auth.token}` },
-    })
-      .then((r) => r.json())
-      .then(setUsers);
-  }, [auth.token]);
+    supabase.from('profiles')
+      .select('id, username')
+      .neq('id', auth.user.id)
+      .order('username')
+      .then(({ data }) => setUsers(data || []));
+  }, [auth.user.id]);
 
-  // Load messages when active user changes
+  // Presence: online users
   useEffect(() => {
-    if (!activeUser) return;
-    setLoadingMsgs(true);
-    fetch(`/api/messages/${activeUser.id}`, {
-      headers: { Authorization: `Bearer ${auth.token}` },
+    const ch = supabase.channel('online-users');
+    ch.on('presence', { event: 'sync' }, () => {
+      const state = ch.presenceState();
+      setOnlineUsers(Object.values(state).flat().map(p => p.user_id));
     })
-      .then((r) => r.json())
-      .then((msgs) => {
-        setMessages(msgs);
+    .subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await ch.track({ user_id: auth.user.id });
+      }
+    });
+    return () => { supabase.removeChannel(ch); };
+  }, [auth.user.id]);
+
+  // Realtime: new messages
+  useEffect(() => {
+    const ch = supabase.channel('messages-rt')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        const msg = payload.new;
+        const me = auth.user.id;
+        const other = activeUserRef.current?.id;
+        const isRelevant =
+          (msg.sender_id === me && msg.receiver_id === other) ||
+          (msg.sender_id === other && msg.receiver_id === me);
+        if (!isRelevant) return;
+
+        const senderUsername = msg.sender_id === me
+          ? auth.user.username
+          : activeUserRef.current?.username;
+        setMessages(prev => {
+          if (prev.some(m => m.id === msg.id)) return prev;
+          return [...prev, { ...msg, sender: { username: senderUsername } }];
+        });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [auth.user.id, auth.user.username]);
+
+  // Load messages for selected conversation
+  useEffect(() => {
+    if (!activeUser) { setMessages([]); return; }
+    setLoadingMsgs(true);
+    const me = auth.user.id;
+    const other = activeUser.id;
+    supabase.from('messages')
+      .select('*, sender:profiles!sender_id(username)')
+      .or(`and(sender_id.eq.${me},receiver_id.eq.${other}),and(sender_id.eq.${other},receiver_id.eq.${me})`)
+      .order('created_at')
+      .then(({ data }) => {
+        setMessages(data || []);
         setLoadingMsgs(false);
       });
-  }, [activeUser, auth.token]);
+  }, [activeUser, auth.user.id]);
 
-  // Socket: receive messages
-  useEffect(() => {
-    const sock = socket.current;
-    if (!sock) return;
-
-    const handler = (msg) => {
-      const isRelevant =
-        (msg.sender_id === activeUser?.id && msg.receiver_id === auth.user.id) ||
-        (msg.sender_id === auth.user.id && msg.receiver_id === activeUser?.id);
-      if (isRelevant) {
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === msg.id)) return prev;
-          return [...prev, msg];
-        });
-      }
-    };
-
-    sock.on('message:new', handler);
-    return () => sock.off('message:new', handler);
-  }, [socket, activeUser, auth.user.id]);
-
-  // Scroll to bottom on new messages
+  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = useCallback(() => {
+  const sendMessage = useCallback(async () => {
     const content = input.trim();
-    if (!content || !activeUser || !socket.current) return;
-    socket.current.emit('message:send', { receiverId: activeUser.id, content });
+    if (!content || !activeUser) return;
     setInput('');
     textareaRef.current?.focus();
-  }, [input, activeUser, socket]);
+    await supabase.from('messages').insert({
+      sender_id: auth.user.id,
+      receiver_id: activeUser.id,
+      content,
+    });
+  }, [input, activeUser, auth.user.id]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -105,21 +129,17 @@ export default function ChatPage() {
     }
   };
 
-  // Group messages by date
-  const groupedMessages = [];
+  // Group messages by date for dividers
+  const grouped = [];
   let lastDate = null;
   for (const msg of messages) {
     const date = formatDate(msg.created_at);
-    if (date !== lastDate) {
-      groupedMessages.push({ type: 'divider', date });
-      lastDate = date;
-    }
-    groupedMessages.push({ type: 'message', msg });
+    if (date !== lastDate) { grouped.push({ type: 'divider', date }); lastDate = date; }
+    grouped.push({ type: 'msg', msg });
   }
 
   return (
     <div className="chat-layout">
-      {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2>Zoomy</h2>
@@ -156,7 +176,6 @@ export default function ChatPage() {
         </div>
       </aside>
 
-      {/* Chat area */}
       <main className="chat-area">
         {!activeUser ? (
           <div className="chat-empty">
@@ -184,7 +203,7 @@ export default function ChatPage() {
                   Начните переписку с {activeUser.username}
                 </div>
               )}
-              {!loadingMsgs && groupedMessages.map((item, i) =>
+              {!loadingMsgs && grouped.map((item, i) =>
                 item.type === 'divider' ? (
                   <div key={`d-${i}`} className="message-date-divider">{item.date}</div>
                 ) : (

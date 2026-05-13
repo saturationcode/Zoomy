@@ -1,17 +1,18 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
-import { SocketProvider } from './context/SocketContext.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ChatPage from './pages/ChatPage.jsx';
 
 function PrivateRoute({ children }) {
-  const { auth } = useAuth();
+  const { auth, loading } = useAuth();
+  if (loading) return <div className="auth-page"><div className="spinner" /></div>;
   return auth ? children : <Navigate to="/login" replace />;
 }
 
 function PublicRoute({ children }) {
-  const { auth } = useAuth();
+  const { auth, loading } = useAuth();
+  if (loading) return <div className="auth-page"><div className="spinner" /></div>;
   return auth ? <Navigate to="/" replace /> : children;
 }
 
@@ -20,16 +21,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-      <Route
-        path="/"
-        element={
-          <PrivateRoute>
-            <SocketProvider>
-              <ChatPage />
-            </SocketProvider>
-          </PrivateRoute>
-        }
-      />
+      <Route path="/" element={<PrivateRoute><ChatPage /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
@@ -37,10 +29,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AuthProvider>
         <AppRoutes />
       </AuthProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
