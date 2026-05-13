@@ -12,7 +12,7 @@ export function SocketProvider({ children }) {
   useEffect(() => {
     if (!auth?.token) return;
 
-    const socket = io('http://localhost:3001', {
+    const socket = io(window.location.origin, {
       auth: { token: auth.token },
     });
 
