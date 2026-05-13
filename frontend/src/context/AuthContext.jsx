@@ -3,6 +3,10 @@ import { supabase } from '../lib/supabase.js';
 
 const AuthContext = createContext(null);
 
+function sanitize(username) {
+  return username.replace(/[^a-zA-Z0-9._-]/g, '');
+}
+
 async function fetchProfile(userId) {
   const { data } = await supabase
     .from('profiles')
@@ -38,20 +42,23 @@ export function AuthProvider({ children }) {
   }, []);
 
   const register = useCallback(async (username, password) => {
-    const email = `${username}@zoomy.app`;
+    const clean = sanitize(username);
+    if (clean.length < 3) throw new Error('Имя пользователя должно содержать минимум 3 буквы/цифры');
+    const email = `${clean}@zoomy.app`;
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw new Error(error.message);
 
     if (data.user) {
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({ id: data.user.id, username });
+        .insert({ id: data.user.id, username: clean });
       if (profileError) throw new Error(profileError.message);
     }
   }, []);
 
   const login = useCallback(async (username, password) => {
-    const email = `${username}@zoomy.app`;
+    const clean = sanitize(username);
+    const email = `${clean}@zoomy.app`;
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error('Неверное имя пользователя или пароль');
   }, []);
