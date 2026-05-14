@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
 import { playMessageSound, requestNotificationPermission, showNotification } from '../lib/notify.js';
+import PhoneInput from '../components/PhoneInput.jsx';
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -68,17 +69,27 @@ function MyProfile({ auth, onClose, logout, onUpdated }) {
   const [uploading, setUploading] = useState(false);
   const [saving,    setSaving]    = useState(false);
   const [saved,     setSaved]     = useState(false);
+  const [ownedNames, setOwnedNames] = useState([]);
+  const [ownedNums,  setOwnedNums]  = useState([]);
+  const [coins,      setCoins]      = useState(u.z_coins || 0);
   const fileRef = useRef();
+
+  useEffect(() => {
+    supabase.from('nft_usernames').select('username').eq('owner_id', u.id)
+      .then(({ data }) => setOwnedNames(data || []));
+    supabase.from('anonymous_numbers').select('number,flag').eq('owner_id', u.id)
+      .then(({ data }) => setOwnedNums(data || []));
+    supabase.from('profiles').select('z_coins').eq('id', u.id).single()
+      .then(({ data }) => data && setCoins(data.z_coins || 0));
+  }, [u.id]);
 
   const uploadAvatar = async (file) => {
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { alert('Максимальный размер файла — 5 МБ'); return; }
+    if (file.size > 5 * 1024 * 1024) { alert('Максимум 5 МБ'); return; }
     setUploading(true);
     try {
       const path = `${u.id}/avatar`;
-      const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, {
-        upsert: true, contentType: file.type,
-      });
+      const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
       if (upErr) throw upErr;
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
       const url = publicUrl + '?t=' + Date.now();
@@ -108,8 +119,7 @@ function MyProfile({ auth, onClose, logout, onUpdated }) {
       avatar_color: color,
     }).eq('id', u.id);
     onUpdated({ nickname: nickname.trim() || null, phone: phone.trim() || null, avatar_color: color });
-    setSaving(false);
-    setSaved(true);
+    setSaving(false); setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -127,17 +137,17 @@ function MyProfile({ auth, onClose, logout, onUpdated }) {
       <div className="sheet profile-sheet">
         <div className="sheet-handle" />
 
-        {/* Avatar + upload */}
+        {/* Avatar row */}
         <div className="profile-av-row">
           <div className="profile-av-wrap">
             {uploading ? (
-              <div className="av av-80" style={{ background:'#eef', position:'relative' }}>
+              <div className="av av-80" style={{ background:'#eef' }}>
                 <div className="spinner" style={{ margin:0, width:24, height:24, borderWidth:2 }} />
               </div>
             ) : (
               <Av name={u.username} color={color} avatarUrl={avatarUrl} size="av-80" />
             )}
-            <button className="av-camera-btn" onClick={() => fileRef.current.click()} title="Изменить фото">
+            <button className="av-camera-btn" onClick={() => fileRef.current.click()}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                 <circle cx="12" cy="13" r="4"/>
@@ -150,9 +160,14 @@ function MyProfile({ auth, onClose, logout, onUpdated }) {
           <div className="profile-id-col">
             <div className="profile-displayname">{displayName}</div>
             <div className="profile-username">@{u.username}</div>
-            <div className="profile-zid-badge">
-              <span className="zid-dot" />
-              {zid(u.id)}
+            <div style={{
+              display:'inline-flex', alignItems:'center', gap:6,
+              background:'linear-gradient(135deg,rgba(245,158,11,.12),rgba(234,179,8,.12))',
+              border:'1px solid rgba(245,158,11,.25)',
+              borderRadius:20, padding:'4px 10px', marginTop:6,
+            }}>
+              <span>⚡</span>
+              <span style={{ fontSize:13, fontWeight:800, color:'#b45309' }}>{coins.toLocaleString()} Z-Coins</span>
             </div>
             {avatarUrl && (
               <button onClick={removeAvatar} className="btn-remove-av">Удалить фото</button>
@@ -164,42 +179,44 @@ function MyProfile({ auth, onClose, logout, onUpdated }) {
         <div className="profile-fields">
           <div className="profile-field">
             <div className="profile-field-label">Никнейм</div>
-            <input
-              className="profile-field-input"
-              value={nickname}
-              onChange={e => setNickname(e.target.value)}
-              placeholder={u.username}
-              maxLength={32}
-            />
+            <input className="profile-field-input" value={nickname}
+              onChange={e => setNickname(e.target.value)} placeholder={u.username} maxLength={32} />
           </div>
           <div className="profile-field">
-            <div className="profile-field-label">Номер телефона</div>
-            <input
-              className="profile-field-input"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              placeholder="+7 900 000-00-00"
-              type="tel"
-            />
+            <div className="profile-field-label">Телефон</div>
+            <PhoneInput value={phone} onChange={v => setPhone(v)} />
           </div>
         </div>
 
-        {/* NFT usernames block */}
+        {/* NFT Usernames */}
         <div className="nft-block">
           <div className="nft-block-header">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
             </svg>
             NFT Usernames
           </div>
-          <div className="nft-item nft-item-main">
+          <div className="nft-item">
             <span className="nft-tag">main</span>
             <span>@{u.username}</span>
           </div>
-          <div className="nft-item nft-item-zid">
-            <span className="nft-tag nft-tag-verified">verified</span>
-            <span>{zid(u.id)}</span>
-          </div>
+          {ownedNames.map(n => (
+            <div key={n.username} className="nft-item">
+              <span className="nft-tag nft-tag-verified">NFT</span>
+              <span>@{n.username}</span>
+            </div>
+          ))}
+          {ownedNums.map(n => (
+            <div key={n.number} className="nft-item">
+              <span className="nft-tag" style={{ background:'rgba(239,68,68,.1)', color:'#dc2626' }}>anon</span>
+              <span style={{ letterSpacing:'.03em' }}>{n.flag} {n.number}</span>
+            </div>
+          ))}
+          {ownedNames.length === 0 && ownedNums.length === 0 && (
+            <div style={{ fontSize:12, color:'var(--text-muted)', padding:'6px 0' }}>
+              Купите NFT имена в Маркетплейсе ✦
+            </div>
+          )}
         </div>
 
         {/* Color picker */}
@@ -208,20 +225,15 @@ function MyProfile({ auth, onClose, logout, onUpdated }) {
           <div className="color-grid">
             {PALETTE.map(p => (
               <div key={p} className={`color-swatch${color === p ? ' selected' : ''}`}
-                style={{ background:p, outlineColor:p }}
-                onClick={() => pickColor(p)} />
+                style={{ background:p, outlineColor:p }} onClick={() => pickColor(p)} />
             ))}
           </div>
         </div>
 
-        {/* Save */}
         <button className="btn-save-profile" onClick={saveProfile} disabled={saving}>
           {saved ? '✓ Сохранено' : saving ? 'Сохраняем…' : 'Сохранить изменения'}
         </button>
-
-        <button className="btn-logout-sheet" onClick={logout}>
-          Выйти из аккаунта
-        </button>
+        <button className="btn-logout-sheet" onClick={logout}>Выйти из аккаунта</button>
       </div>
     </>
   );
