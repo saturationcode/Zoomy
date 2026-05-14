@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -8,15 +8,27 @@ export default function LoginPage() {
   const [form, setForm]     = useState({ username:'', password:'' });
   const [error, setError]   = useState('');
   const [loading, setLoading] = useState(false);
+  const [slow, setSlow]     = useState(false);
 
   const handle = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
   const submit = async e => {
-    e.preventDefault(); setError(''); setLoading(true);
-    try { await login(form.username.trim(), form.password); navigate('/'); }
-    catch (err) { setError(err.message); }
-    finally { setLoading(false); }
+    e.preventDefault(); setError(''); setSlow(false); setLoading(true);
+    // Show "slow connection" hint after 5 seconds
+    const slowTimer = setTimeout(() => setSlow(true), 5000);
+    try {
+      await login(form.username.trim(), form.password);
+      navigate('/');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      clearTimeout(slowTimer);
+      setLoading(false);
+      setSlow(false);
+    }
   };
+
+  const loadingText = slow ? 'Медленное соединение…' : 'Входим…';
 
   return (
     <div className="auth-page">
@@ -43,17 +55,25 @@ export default function LoginPage() {
           <div className="form-group">
             <label>Имя пользователя</label>
             <input name="username" value={form.username} onChange={handle}
-              placeholder="username" autoComplete="username" autoFocus />
+              placeholder="username" autoComplete="username" autoFocus
+              disabled={loading} />
           </div>
           <div className="form-group">
             <label>Пароль</label>
             <input name="password" type="password" value={form.password} onChange={handle}
-              placeholder="••••••" autoComplete="current-password" />
+              placeholder="••••••" autoComplete="current-password"
+              disabled={loading} />
           </div>
           <button className="btn-primary" type="submit" disabled={loading}>
-            {loading ? 'Входим…' : 'Войти'}
+            {loading ? loadingText : 'Войти'}
           </button>
         </form>
+
+        {slow && (
+          <div style={{ fontSize:12, color:'#9098c0', textAlign:'center', marginTop:10, lineHeight:1.5 }}>
+            Соединение медленное — подождите ещё немного
+          </div>
+        )}
 
         <div className="auth-footer">
           Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>

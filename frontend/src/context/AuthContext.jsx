@@ -7,7 +7,7 @@ function sanitize(username) {
   return username.replace(/[^a-zA-Z0-9._-]/g, '');
 }
 
-function withTimeout(p, ms = 12_000, msg = 'Сервер не отвечает. Проверьте интернет.') {
+function withTimeout(p, ms = 25_000, msg = 'Сервер не отвечает. Проверьте интернет.') {
   return Promise.race([
     Promise.resolve(p),
     new Promise((_, reject) => setTimeout(() => reject(new Error(msg)), ms)),
@@ -30,7 +30,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let settled = false;
     const done = () => { if (!settled) { settled = true; setLoading(false); } };
-    const timer = setTimeout(done, 12_000);
+    const timer = setTimeout(done, 28_000);
 
     supabase.auth.getSession()
       .then(async ({ data: { session } }) => {
@@ -53,11 +53,13 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_UP') return;
       if (session) {
-        // Only set auth from here if it's not already set (login() sets it directly)
-        const profile = await withTimeout(fetchProfile(session.user.id), 10_000)
-          .catch(() => null);
+        // Set minimal auth immediately so PrivateRoute passes right away
+        const usernameFromEmail = session.user.email?.replace('@zoomy.app', '') ?? '';
+        setAuth(prev => prev ?? { user: { id: session.user.id, username: usernameFromEmail } });
+        // Then enrich with full profile in the background
+        const profile = await fetchProfile(session.user.id).catch(() => null);
         if (profile?.username) {
-          setAuth(prev => prev ? prev : { user: { id: session.user.id, ...profile } });
+          setAuth({ user: { id: session.user.id, ...profile } });
         }
       } else {
         setAuth(null);
