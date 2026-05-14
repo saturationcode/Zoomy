@@ -21,7 +21,13 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const done = () => setLoading(false);
+
+    // 10-second timeout so the spinner never freezes on slow connections
+    const timer = setTimeout(done, 10_000);
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      clearTimeout(timer);
       if (session) {
         const profile = await fetchProfile(session.user.id);
         if (profile?.username) {
@@ -30,8 +36,8 @@ export function AuthProvider({ children }) {
           await supabase.auth.signOut();
         }
       }
-      setLoading(false);
-    });
+      done();
+    }).catch(() => { clearTimeout(timer); done(); });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_UP') return;
