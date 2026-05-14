@@ -188,30 +188,32 @@ function ItemCard({ item, type, onBuy, myCoins, owned }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function MarketplacePage() {
   const { auth } = useAuth();
+  const userId = auth?.user?.id;
   const [tab,       setTab]       = useState('usernames');
   const [usernames, setUsernames] = useState([]);
   const [numbers,   setNumbers]   = useState([]);
-  const [myCoins,   setMyCoins]   = useState(auth.user.z_coins || 0);
+  const [myCoins,   setMyCoins]   = useState(0);
   const [ownedU,    setOwnedU]    = useState(new Set());
   const [ownedN,    setOwnedN]    = useState(new Set());
   const [toast,     setToast]     = useState(null);
-  const [sort,      setSort]      = useState('price_desc'); // 'price_desc' | 'price_asc'
+  const [sort,      setSort]      = useState('price_desc');
   const [loading,   setLoading]   = useState(true);
 
   useEffect(() => {
+    if (!userId) return;
     setLoading(true);
     Promise.all([
       supabase.from('nft_usernames').select('*').order('price', { ascending: false }),
       supabase.from('anonymous_numbers').select('*').order('price', { ascending: false }),
-      supabase.from('profiles').select('z_coins').eq('id', auth.user.id).single(),
+      supabase.from('profiles').select('z_coins').eq('id', userId).single(),
     ]).then(([u, n, p]) => {
       setUsernames(u.data || []);
-      setOwnedU(new Set((u.data || []).filter(x => x.owner_id === auth.user.id).map(x => x.id)));
+      setOwnedU(new Set((u.data || []).filter(x => x.owner_id === userId).map(x => x.id)));
       setNumbers(n.data || []);
-      setOwnedN(new Set((n.data || []).filter(x => x.owner_id === auth.user.id).map(x => x.id)));
-      if (p.data) { setMyCoins(p.data.z_coins || 0); auth.user.z_coins = p.data.z_coins || 0; }
+      setOwnedN(new Set((n.data || []).filter(x => x.owner_id === userId).map(x => x.id)));
+      if (p.data) setMyCoins(p.data.z_coins || 0);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [auth.user.id]);
+  }, [userId]);
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
@@ -219,32 +221,30 @@ export default function MarketplacePage() {
   };
 
   const buyUsername = async (item) => {
-    if (myCoins < item.price) return;
+    if (!userId || myCoins < item.price) return;
     const newCoins = myCoins - item.price;
     const [r1, r2] = await Promise.all([
-      supabase.from('profiles').update({ z_coins: newCoins }).eq('id', auth.user.id),
-      supabase.from('nft_usernames').update({ owner_id: auth.user.id, is_listed: false }).eq('id', item.id),
+      supabase.from('profiles').update({ z_coins: newCoins }).eq('id', userId),
+      supabase.from('nft_usernames').update({ owner_id: userId, is_listed: false }).eq('id', item.id),
     ]);
     if (r1.error || r2.error) { showToast('Ошибка покупки', 'error'); return; }
     setMyCoins(newCoins);
-    auth.user.z_coins = newCoins;
     setOwnedU(s => new Set([...s, item.id]));
-    setUsernames(us => us.map(u => u.id === item.id ? { ...u, owner_id: auth.user.id, is_listed: false } : u));
+    setUsernames(us => us.map(u => u.id === item.id ? { ...u, owner_id: userId, is_listed: false } : u));
     showToast(`@${item.username} теперь ваш!`);
   };
 
   const buyNumber = async (item) => {
-    if (myCoins < item.price) return;
+    if (!userId || myCoins < item.price) return;
     const newCoins = myCoins - item.price;
     const [r1, r2] = await Promise.all([
-      supabase.from('profiles').update({ z_coins: newCoins }).eq('id', auth.user.id),
-      supabase.from('anonymous_numbers').update({ owner_id: auth.user.id, is_listed: false }).eq('id', item.id),
+      supabase.from('profiles').update({ z_coins: newCoins }).eq('id', userId),
+      supabase.from('anonymous_numbers').update({ owner_id: userId, is_listed: false }).eq('id', item.id),
     ]);
     if (r1.error || r2.error) { showToast('Ошибка покупки', 'error'); return; }
     setMyCoins(newCoins);
-    auth.user.z_coins = newCoins;
     setOwnedN(s => new Set([...s, item.id]));
-    setNumbers(ns => ns.map(n => n.id === item.id ? { ...n, owner_id: auth.user.id, is_listed: false } : n));
+    setNumbers(ns => ns.map(n => n.id === item.id ? { ...n, owner_id: userId, is_listed: false } : n));
     showToast('Номер куплен!');
   };
 

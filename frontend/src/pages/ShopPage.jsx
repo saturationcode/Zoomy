@@ -39,7 +39,8 @@ async function tryApplePay(coins, price) {
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function ShopPage() {
   const { auth } = useAuth();
-  const [balance,   setBalance]   = useState(auth.user.z_coins || 0);
+  const userId = auth?.user?.id;
+  const [balance,   setBalance]   = useState(0);
   const [promo,     setPromo]     = useState('');
   const [promoMsg,  setPromoMsg]  = useState(null);
   const [buying,    setBuying]    = useState(null);
@@ -47,11 +48,12 @@ export default function ShopPage() {
   const [promoUsed, setPromoUsed] = useState(false);
 
   useEffect(() => {
-    supabase.from('profiles').select('z_coins').eq('id', auth.user.id).single()
+    if (!userId) return;
+    supabase.from('profiles').select('z_coins').eq('id', userId).single()
       .then(({ data }) => {
-        if (data) { setBalance(data.z_coins || 0); auth.user.z_coins = data.z_coins || 0; }
+        if (data) setBalance(data.z_coins || 0);
       });
-  }, [auth.user.id]);
+  }, [userId]);
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
@@ -59,9 +61,10 @@ export default function ShopPage() {
   };
 
   const addCoins = async (amount) => {
+    if (!userId) return false;
     const nb = balance + amount;
-    const { error } = await supabase.from('profiles').update({ z_coins: nb }).eq('id', auth.user.id);
-    if (!error) { setBalance(nb); auth.user.z_coins = nb; }
+    const { error } = await supabase.from('profiles').update({ z_coins: nb }).eq('id', userId);
+    if (!error) setBalance(nb);
     return !error;
   };
 
