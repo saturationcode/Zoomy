@@ -21,18 +21,28 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Restore session on page load
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
         const profile = await fetchProfile(session.user.id);
-        setAuth({ user: { id: session.user.id, username: profile?.username } });
+        if (profile?.username) {
+          setAuth({ user: { id: session.user.id, username: profile.username } });
+        } else {
+          // Profile missing — sign out to avoid broken state
+          await supabase.auth.signOut();
+        }
       }
       setLoading(false);
     });
 
+    // Listen for sign-in/sign-out (but skip SIGNED_UP — handled manually in register)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_UP') return;
       if (session) {
         const profile = await fetchProfile(session.user.id);
-        setAuth({ user: { id: session.user.id, username: profile?.username } });
+        if (profile?.username) {
+          setAuth({ user: { id: session.user.id, username: profile.username } });
+        }
       } else {
         setAuth(null);
       }
@@ -45,15 +55,18 @@ export function AuthProvider({ children }) {
     const clean = sanitize(username);
     if (clean.length < 4) throw new Error('Минимум 4 символа в имени пользователя');
     const email = `${clean}@zoomy.app`;
+
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw new Error(error.message);
+    if (!data.user) throw new Error('Не удалось создать аккаунт');
 
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({ id: data.user.id, username: clean });
-      if (profileError) throw new Error(profileError.message);
-    }
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({ id: data.user.id, username: clean });
+    if (profileError) throw new Error(profileError.message);
+
+    // Set auth manually after profile is guaranteed to exist
+    setAuth({ user: { id: data.user.id, username: clean } });
   }, []);
 
   const login = useCallback(async (username, password) => {

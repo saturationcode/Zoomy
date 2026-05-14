@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase.js';
 function avatarLetter(name) { return name ? name[0].toUpperCase() : '?'; }
 
 function avatarColor(name) {
+  if (!name) return '#4a7cf7';
   const colors = ['#4a7cf7','#7b5cf0','#30d158','#ff6b6b','#ffa500','#00bcd4','#e91e63','#795548'];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
