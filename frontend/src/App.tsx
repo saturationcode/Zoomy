@@ -9,6 +9,7 @@ import BottomTabBar from './components/layout/BottomTabBar';
 
 const MarketplacePage = lazy(() => import('./pages/MarketplacePage'));
 const StarsPage       = lazy(() => import('./pages/StarsPage'));
+const AdminPage       = lazy(() => import('./pages/AdminPage'));
 
 // Global Framer Motion config — smooth spring physics everywhere
 const MOTION_CONFIG = {
@@ -79,6 +80,7 @@ function AppRoutes() {
       <Route path="/"       element={<PrivateRoute><AppShell><ChatsPage /></AppShell></PrivateRoute>} />
       <Route path="/market" element={<PrivateRoute><AppShell><Suspense fallback={<LoadingScreen />}><MarketplacePage /></Suspense></AppShell></PrivateRoute>} />
       <Route path="/stars"  element={<PrivateRoute><AppShell><Suspense fallback={<LoadingScreen />}><StarsPage /></Suspense></AppShell></PrivateRoute>} />
+      <Route path="/admin"  element={<PrivateRoute><AppShell><Suspense fallback={<LoadingScreen />}><AdminPage /></Suspense></AppShell></PrivateRoute>} />
       <Route path="*"       element={<Navigate to="/" replace />} />
     </Routes>
   );

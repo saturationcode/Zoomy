@@ -6,127 +6,349 @@ import { useUIStore } from '../store/uiStore';
 import type { GiftType, AnonymousNumber, NFTUsername, Rarity } from '../types';
 import { RARITY_CONFIG } from '../types';
 
-// ─── Demo data ────────────────────────────────────────────────────────────────
-
-const DEMO_GIFTS: GiftType[] = [
-  {
-    id: '1', name: 'Flame Heart', description: 'A fiery token of affection',
-    emoji_fallback: 'fire-heart', animation_url: null, image_url: null,
-    rarity: 'legendary', stars_price: 500,
-    supply_limit: 1000, total_minted: 247,
-    gradient: 'linear-gradient(135deg, #ef4444 0%, #f59e0b 100%)',
-    created_at: '',
-  },
-  {
-    id: '2', name: 'Crystal Star', description: 'Rare crystallized starlight',
-    emoji_fallback: 'star', animation_url: null, image_url: null,
-    rarity: 'epic', stars_price: 250,
-    supply_limit: 5000, total_minted: 1203,
-    gradient: 'linear-gradient(135deg, #7c3aed 0%, #38bdf8 100%)',
-    created_at: '',
-  },
-  {
-    id: '3', name: 'Neon Rose', description: 'Synthwave flower in bloom',
-    emoji_fallback: 'rose', animation_url: null, image_url: null,
-    rarity: 'rare', stars_price: 100,
-    supply_limit: null, total_minted: 8921,
-    gradient: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
-    created_at: '',
-  },
-  {
-    id: '4', name: 'Lucky Clover', description: 'For a little good luck',
-    emoji_fallback: 'clover', animation_url: null, image_url: null,
-    rarity: 'common', stars_price: 25,
-    supply_limit: null, total_minted: 42100,
-    gradient: 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
-    created_at: '',
-  },
-  {
-    id: '5', name: 'Thunder Bolt', description: 'Raw power channeled',
-    emoji_fallback: 'bolt', animation_url: null, image_url: null,
-    rarity: 'epic', stars_price: 300,
-    supply_limit: 2000, total_minted: 589,
-    gradient: 'linear-gradient(135deg, #f59e0b 0%, #7c3aed 100%)',
-    created_at: '',
-  },
-  {
-    id: '6', name: 'Ice Comet', description: 'A frozen trail across the void',
-    emoji_fallback: 'comet', animation_url: null, image_url: null,
-    rarity: 'legendary', stars_price: 1000,
-    supply_limit: 100, total_minted: 12,
-    gradient: 'linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)',
-    created_at: '',
-  },
-  {
-    id: '7', name: 'Golden Crown', description: 'Wear the mark of royalty',
-    emoji_fallback: 'crown', animation_url: null, image_url: null,
-    rarity: 'legendary', stars_price: 2000,
-    supply_limit: 50, total_minted: 7,
-    gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-    created_at: '',
-  },
-  {
-    id: '8', name: 'Shadow Orb', description: 'Darkness compressed into beauty',
-    emoji_fallback: 'orb', animation_url: null, image_url: null,
-    rarity: 'epic', stars_price: 400,
-    supply_limit: 3000, total_minted: 921,
-    gradient: 'linear-gradient(135deg, #1e1b4b 0%, #7c3aed 100%)',
-    created_at: '',
-  },
-];
-
-const DEMO_NUMBERS: AnonymousNumber[] = [
-  { id: 'n1', number: '+888 100 2049', owner_id: null, stars_price: 500,  is_available: true, rarity: 'rare',      flag: 'fragment', created_at: '' },
-  { id: 'n2', number: '+888 777 0001', owner_id: null, stars_price: 2500, is_available: true, rarity: 'legendary', flag: 'fragment', created_at: '' },
-  { id: 'n3', number: '+888 420 6969', owner_id: null, stars_price: 1200, is_available: true, rarity: 'epic',      flag: 'fragment', created_at: '' },
-  { id: 'n4', number: '+888 200 0042', owner_id: null, stars_price: 300,  is_available: true, rarity: 'common',    flag: 'fragment', created_at: '' },
-  { id: 'n5', number: '+888 100 8888', owner_id: null, stars_price: 5000, is_available: true, rarity: 'legendary', flag: 'fragment', created_at: '' },
-  { id: 'n6', number: '+888 333 3333', owner_id: null, stars_price: 7500, is_available: true, rarity: 'legendary', flag: 'fragment', created_at: '' },
-  { id: 'n7', number: '+888 555 0099', owner_id: null, stars_price: 800,  is_available: true, rarity: 'rare',      flag: 'fragment', created_at: '' },
-  { id: 'n8', number: '+888 010 0101', owner_id: null, stars_price: 150,  is_available: true, rarity: 'common',    flag: 'fragment', created_at: '' },
-];
-
-const DEMO_USERNAMES: NFTUsername[] = [
-  { id: 'u1',  username: '@diamond',   owner_id: null, stars_price: 50000, is_listed: true, rarity: 'legendary', created_at: '' },
-  { id: 'u2',  username: '@crypto',    owner_id: null, stars_price: 25000, is_listed: true, rarity: 'legendary', created_at: '' },
-  { id: 'u3',  username: '@nova',      owner_id: null, stars_price: 10000, is_listed: true, rarity: 'epic',      created_at: '' },
-  { id: 'u4',  username: '@pixel',     owner_id: null, stars_price: 5000,  is_listed: true, rarity: 'rare',      created_at: '' },
-  { id: 'u5',  username: '@light',     owner_id: null, stars_price: 8000,  is_listed: true, rarity: 'epic',      created_at: '' },
-  { id: 'u6',  username: '@echo',      owner_id: null, stars_price: 2500,  is_listed: true, rarity: 'rare',      created_at: '' },
-  { id: 'u7',  username: '@sprout',    owner_id: null, stars_price: 500,   is_listed: true, rarity: 'common',    created_at: '' },
-  { id: 'u8',  username: '@phantom',   owner_id: null, stars_price: 18000, is_listed: true, rarity: 'legendary', created_at: '' },
-  { id: 'u9',  username: '@zenith',    owner_id: null, stars_price: 12000, is_listed: true, rarity: 'epic',      created_at: '' },
-  { id: 'u10', username: '@drift',     owner_id: null, stars_price: 3200,  is_listed: true, rarity: 'rare',      created_at: '' },
-];
-
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-
-type TabId = 'gifts' | 'numbers' | 'usernames';
-const TAB_ORDER: TabId[] = ['gifts', 'numbers', 'usernames'];
-
-// ─── Gift filter chips ────────────────────────────────────────────────────────
-
-type GiftFilter = 'all' | 'legendary' | 'epic' | 'rare' | 'common' | 'trending';
-type RarityFilter = 'all' | 'legendary' | 'epic' | 'rare' | 'common';
-type UsernameFilter = 'all' | 'trending' | 'legendary' | 'epic' | 'rare' | 'common';
-type SortMode = 'price-asc' | 'price-desc';
-
 // ─── SVG icons ────────────────────────────────────────────────────────────────
 
 function IconPhone() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 16.92V19.92C22.0011 20.4853 21.7605 21.0238 21.3353 21.4001C20.9101 21.7764 20.3474 21.9565 19.78 21.9C16.5552 21.5517 13.4574 20.4013 10.77 18.56C8.27078 16.8836 6.15447 14.7673 4.48 12.27C2.6325 9.57063 1.48179 6.45987 1.14 3.22C1.08355 2.65452 1.2625 2.09319 1.63677 1.66855C2.01104 1.24391 2.54693 1.00297 3.11 1H6.11C7.10519 0.990206 7.95287 1.68546 8.11 2.67C8.23662 3.58 8.47145 4.47273 8.81 5.33C9.07413 6.01886 8.90477 6.79617 8.38 7.31L7.09 8.6C8.61448 11.1856 10.7144 13.2855 13.3 14.81L14.59 13.52C15.1138 12.9952 15.8911 12.8259 16.58 13.09C17.4373 13.4286 18.33 13.6634 19.24 13.79C20.2395 13.9487 20.9381 14.8136 20.91 15.82L22 16.92Z"/>
+      <path d="M22 16.92V19.92C22 20.48 21.76 21.02 21.34 21.4C20.91 21.78 20.35 21.96 19.78 21.9C16.56 21.55 13.46 20.4 10.77 18.56C8.27 16.88 6.15 14.77 4.48 12.27C2.63 9.57 1.48 6.45 1.14 3.22C1.08 2.65 1.26 2.09 1.64 1.67C2.01 1.24 2.55 1 3.11 1H6.11C7.1 .99 7.95 1.69 8.11 2.67C8.24 3.58 8.47 4.47 8.81 5.33C9.07 6.02 8.9 6.8 8.38 7.31L7.09 8.6C8.61 11.19 10.71 13.29 13.3 14.81L14.59 13.52C15.11 13 15.89 12.83 16.58 13.09C17.44 13.43 18.33 13.66 19.24 13.79C20.24 13.95 20.94 14.82 20.91 15.82L22 16.92Z"/>
+    </svg>
+  );
+}
+
+function IconAt() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M16 8V13C16 14.1 16.9 15 18 15C19.1 15 20 14.1 20 13V12C20 7.58 16.42 4 12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20H16"/>
+    </svg>
+  );
+}
+
+function IconGift() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 12 20 22 4 22 4 12"/>
+      <rect x="2" y="7" width="20" height="5"/>
+      <line x1="12" y1="22" x2="12" y2="7"/>
+      <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7Z"/>
+      <path d="M12 7H16.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7Z"/>
+    </svg>
+  );
+}
+
+function IconStar({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
     </svg>
   );
 }
 
 function IconFire() {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none">
       <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 3z"/>
     </svg>
+  );
+}
+
+// ─── Demo data ────────────────────────────────────────────────────────────────
+
+const DEMO_GIFTS: GiftType[] = [
+  { id:'g1', name:'Flame Heart',   description:'A fiery token of affection',     emoji_fallback:'fire-heart', animation_url:null, image_url:null, rarity:'legendary', stars_price:2000, supply_limit:1000, total_minted:247, gradient:'linear-gradient(135deg,#ef4444 0%,#f59e0b 100%)', created_at:'' },
+  { id:'g2', name:'Crystal Star',  description:'Rare crystallized starlight',    emoji_fallback:'star',      animation_url:null, image_url:null, rarity:'epic',      stars_price:500,  supply_limit:5000, total_minted:1203, gradient:'linear-gradient(135deg,#7c3aed 0%,#38bdf8 100%)', created_at:'' },
+  { id:'g3', name:'Neon Rose',     description:'Synthwave flower in bloom',      emoji_fallback:'rose',      animation_url:null, image_url:null, rarity:'rare',      stars_price:150,  supply_limit:null, total_minted:8921, gradient:'linear-gradient(135deg,#ec4899 0%,#8b5cf6 100%)', created_at:'' },
+  { id:'g4', name:'Lucky Clover',  description:'For a little good luck',         emoji_fallback:'clover',    animation_url:null, image_url:null, rarity:'common',    stars_price:25,   supply_limit:null, total_minted:42100, gradient:'linear-gradient(135deg,#10b981 0%,#06b6d4 100%)', created_at:'' },
+  { id:'g5', name:'Thunder Bolt',  description:'Raw power channeled',            emoji_fallback:'bolt',      animation_url:null, image_url:null, rarity:'epic',      stars_price:750,  supply_limit:2000, total_minted:589,  gradient:'linear-gradient(135deg,#f59e0b 0%,#7c3aed 100%)', created_at:'' },
+  { id:'g6', name:'Ice Comet',     description:'A frozen trail across the void', emoji_fallback:'comet',     animation_url:null, image_url:null, rarity:'legendary', stars_price:5000, supply_limit:100,  total_minted:12,   gradient:'linear-gradient(135deg,#38bdf8 0%,#818cf8 100%)', created_at:'' },
+  { id:'g7', name:'Golden Crown',  description:'Wear the mark of royalty',       emoji_fallback:'crown',     animation_url:null, image_url:null, rarity:'legendary', stars_price:10000, supply_limit:50,  total_minted:7,    gradient:'linear-gradient(135deg,#f59e0b 0%,#d97706 100%)', created_at:'' },
+  { id:'g8', name:'Shadow Orb',    description:'Darkness compressed into beauty',emoji_fallback:'orb',       animation_url:null, image_url:null, rarity:'epic',      stars_price:400,  supply_limit:3000, total_minted:921,  gradient:'linear-gradient(135deg,#1e1b4b 0%,#7c3aed 100%)', created_at:'' },
+  { id:'g9', name:'Aurora',        description:'Northern lights captured',        emoji_fallback:'aurora',    animation_url:null, image_url:null, rarity:'rare',      stars_price:200,  supply_limit:null, total_minted:5432, gradient:'linear-gradient(135deg,#06b6d4 0%,#10b981 100%)', created_at:'' },
+  { id:'g10',name:'Dragon Seal',   description:'Ancient power, modern form',      emoji_fallback:'dragon',    animation_url:null, image_url:null, rarity:'legendary', stars_price:8000, supply_limit:200, total_minted:34,   gradient:'linear-gradient(135deg,#dc2626 0%,#7c3aed 100%)', created_at:'' },
+];
+
+// +999 premium and regular +888 numbers
+const DEMO_NUMBERS: AnonymousNumber[] = [
+  // +999 — ultra-premium Telegram Fragment style
+  { id:'p1', number:'+999 999 9999', owner_id:null, stars_price:200000, is_available:true, rarity:'legendary', flag:'+999', created_at:'' },
+  { id:'p2', number:'+999 888 8888', owner_id:null, stars_price:150000, is_available:true, rarity:'legendary', flag:'+999', created_at:'' },
+  { id:'p3', number:'+999 777 7777', owner_id:null, stars_price:120000, is_available:true, rarity:'legendary', flag:'+999', created_at:'' },
+  { id:'p4', number:'+999 100 0001', owner_id:null, stars_price:50000,  is_available:true, rarity:'epic',      flag:'+999', created_at:'' },
+  { id:'p5', number:'+999 420 0000', owner_id:null, stars_price:30000,  is_available:true, rarity:'epic',      flag:'+999', created_at:'' },
+  { id:'p6', number:'+999 500 1234', owner_id:null, stars_price:10000,  is_available:true, rarity:'rare',      flag:'+999', created_at:'' },
+  // +888 — regular anonymous
+  { id:'n1', number:'+888 100 2049', owner_id:null, stars_price:500,    is_available:true, rarity:'rare',      flag:'+888', created_at:'' },
+  { id:'n2', number:'+888 777 0001', owner_id:null, stars_price:300,    is_available:true, rarity:'common',    flag:'+888', created_at:'' },
+  { id:'n3', number:'+888 420 6969', owner_id:null, stars_price:400,    is_available:true, rarity:'rare',      flag:'+888', created_at:'' },
+  { id:'n4', number:'+888 200 0042', owner_id:null, stars_price:200,    is_available:true, rarity:'common',    flag:'+888', created_at:'' },
+];
+
+const DEMO_USERNAMES: NFTUsername[] = [
+  { id:'u1',  username:'@diamond',  owner_id:null, stars_price:50000, is_listed:true, rarity:'legendary', created_at:'' },
+  { id:'u2',  username:'@crypto',   owner_id:null, stars_price:25000, is_listed:true, rarity:'legendary', created_at:'' },
+  { id:'u3',  username:'@nova',     owner_id:null, stars_price:10000, is_listed:true, rarity:'epic',      created_at:'' },
+  { id:'u4',  username:'@pixel',    owner_id:null, stars_price:5000,  is_listed:true, rarity:'rare',      created_at:'' },
+  { id:'u5',  username:'@light',    owner_id:null, stars_price:8000,  is_listed:true, rarity:'epic',      created_at:'' },
+  { id:'u6',  username:'@echo',     owner_id:null, stars_price:2500,  is_listed:true, rarity:'rare',      created_at:'' },
+  { id:'u7',  username:'@sprout',   owner_id:null, stars_price:500,   is_listed:true, rarity:'common',    created_at:'' },
+  { id:'u8',  username:'@phantom',  owner_id:null, stars_price:18000, is_listed:true, rarity:'legendary', created_at:'' },
+  { id:'u9',  username:'@zenith',   owner_id:null, stars_price:12000, is_listed:true, rarity:'epic',      created_at:'' },
+  { id:'u10', username:'@drift',    owner_id:null, stars_price:3200,  is_listed:true, rarity:'rare',      created_at:'' },
+];
+
+// ─── Gift SVG art (based on gift name) ───────────────────────────────────────
+
+function GiftArt({ gift }: { gift: GiftType }) {
+  const size = 64;
+  const style: React.CSSProperties = {
+    width: size, height: size,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: 36,
+    filter: 'drop-shadow(0 4px 16px rgba(0,0,0,.4))',
+  };
+  const arts: Record<string, string> = {
+    'fire-heart': '❤️‍🔥', star: '⭐', rose: '🌹', clover: '🍀',
+    bolt: '⚡', comet: '☄️', crown: '👑', orb: '🔮',
+    aurora: '🌌', dragon: '🐉',
+  };
+  return <div style={style}>{arts[gift.emoji_fallback] ?? '🎁'}</div>;
+}
+
+// ─── Rarity border/glow styles ────────────────────────────────────────────────
+
+function rarityBorder(rarity: Rarity): string {
+  const map: Record<Rarity, string> = {
+    common:    '1px solid rgba(107,114,128,.4)',
+    rare:      '1px solid rgba(59,130,246,.7)',
+    epic:      '1px solid rgba(168,85,247,.8)',
+    legendary: '1px solid rgba(245,158,11,.9)',
+  };
+  return map[rarity];
+}
+function rarityGlow(rarity: Rarity): string {
+  const map: Record<Rarity, string> = {
+    common:    '0 4px 20px rgba(107,114,128,.15)',
+    rare:      '0 4px 24px rgba(59,130,246,.35), 0 0 40px rgba(59,130,246,.15)',
+    epic:      '0 4px 28px rgba(168,85,247,.45), 0 0 50px rgba(168,85,247,.2)',
+    legendary: '0 4px 32px rgba(245,158,11,.55), 0 0 60px rgba(245,158,11,.25)',
+  };
+  return map[rarity];
+}
+
+// ─── Gift card ─────────────────────────────────────────────────────────────────
+
+function GiftCard({ gift, onBuy }: { gift: GiftType; onBuy: (g: GiftType) => void }) {
+  const cfg = RARITY_CONFIG[gift.rarity];
+  const isLegendary = gift.rarity === 'legendary';
+
+  return (
+    <motion.div
+      whileHover={{ y: -6, scale: 1.02 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+      onClick={() => onBuy(gift)}
+      style={{
+        borderRadius: 20,
+        overflow: 'hidden',
+        border: rarityBorder(gift.rarity),
+        boxShadow: rarityGlow(gift.rarity),
+        background: 'rgba(255,255,255,.03)',
+        cursor: 'pointer',
+        position: 'relative',
+      }}
+    >
+      {/* Gradient top section */}
+      <div style={{
+        background: gift.gradient,
+        padding: '24px 16px 20px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 8,
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Shimmer for legendary */}
+        {isLegendary && (
+          <motion.div
+            animate={{ x: ['-100%', '200%'] }}
+            transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 1.8, ease: 'easeInOut' }}
+            style={{
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,.18) 50%, transparent 100%)',
+              pointerEvents: 'none',
+            }}
+          />
+        )}
+
+        <GiftArt gift={gift} />
+
+        {/* Supply pill */}
+        {gift.supply_limit && (
+          <div style={{
+            fontSize: 10, fontWeight: 600,
+            color: 'rgba(255,255,255,.7)',
+            background: 'rgba(0,0,0,.25)',
+            padding: '2px 8px', borderRadius: 20,
+            letterSpacing: '0.04em',
+          }}>
+            {gift.total_minted}/{gift.supply_limit}
+          </div>
+        )}
+      </div>
+
+      {/* Card body */}
+      <div style={{ padding: '12px 14px 14px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9', margin: 0, lineHeight: 1.2 }}>
+            {gift.name}
+          </p>
+          <RarityBadge rarity={gift.rarity} />
+        </div>
+
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 4,
+          color: '#fbbf24', fontWeight: 700, fontSize: 14,
+        }}>
+          <IconStar size={13} />
+          {gift.stars_price.toLocaleString()}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Number card ───────────────────────────────────────────────────────────────
+
+function NumberCard({ num, onBuy }: { num: AnonymousNumber; onBuy: (n: AnonymousNumber) => void }) {
+  const cfg = RARITY_CONFIG[num.rarity];
+  const isPremium = num.flag === '+999';
+
+  return (
+    <motion.div
+      whileHover={{ y: -4, scale: 1.01 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+      onClick={() => onBuy(num)}
+      style={{
+        borderRadius: 16,
+        border: rarityBorder(num.rarity),
+        boxShadow: rarityGlow(num.rarity),
+        background: isPremium
+          ? 'linear-gradient(135deg, rgba(245,158,11,.08) 0%, rgba(124,58,237,.06) 100%)'
+          : 'rgba(255,255,255,.03)',
+        padding: '14px 16px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14,
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {isPremium && (
+        <motion.div
+          animate={{ x: ['-100%', '250%'] }}
+          transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
+          style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(90deg, transparent, rgba(245,158,11,.12), transparent)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
+      {/* Icon */}
+      <div style={{
+        width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+        background: isPremium
+          ? 'linear-gradient(135deg, rgba(245,158,11,.2), rgba(124,58,237,.15))'
+          : cfg.bg,
+        border: `1px solid ${cfg.glow}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: cfg.color,
+      }}>
+        <IconPhone />
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', letterSpacing: '0.02em' }}>
+            {num.number}
+          </span>
+          {isPremium && (
+            <span style={{
+              fontSize: 9, fontWeight: 800, padding: '1px 5px', borderRadius: 6,
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              color: '#000', letterSpacing: '0.06em',
+            }}>PREMIUM</span>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <RarityBadge rarity={num.rarity} />
+          <span style={{ fontSize: 11, color: '#64748b' }}>{num.flag}</span>
+        </div>
+      </div>
+
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 3,
+        color: '#fbbf24', fontWeight: 700, fontSize: 13, flexShrink: 0,
+      }}>
+        <IconStar size={11} />
+        {num.stars_price.toLocaleString()}
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Username card ─────────────────────────────────────────────────────────────
+
+function UsernameCard({ un, onBuy }: { un: NFTUsername; onBuy: (u: NFTUsername) => void }) {
+  const cfg = RARITY_CONFIG[un.rarity];
+  return (
+    <motion.div
+      whileHover={{ y: -3, scale: 1.01 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+      onClick={() => onBuy(un)}
+      style={{
+        borderRadius: 14,
+        border: rarityBorder(un.rarity),
+        boxShadow: rarityGlow(un.rarity),
+        background: cfg.bg,
+        padding: '12px 14px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+      }}
+    >
+      <div style={{
+        width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+        background: `linear-gradient(135deg, ${cfg.color}22, ${cfg.color}11)`,
+        border: `1px solid ${cfg.glow}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: cfg.color, fontSize: 16, fontWeight: 800,
+      }}>@</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', marginBottom: 2 }}>
+          {un.username}
+        </div>
+        <RarityBadge rarity={un.rarity} />
+      </div>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 3,
+        color: '#fbbf24', fontWeight: 700, fontSize: 13, flexShrink: 0,
+      }}>
+        <IconStar size={11} />
+        {un.stars_price.toLocaleString()}
+      </div>
+    </motion.div>
   );
 }
 
@@ -136,43 +358,31 @@ function RarityBadge({ rarity }: { rarity: Rarity }) {
   const cfg = RARITY_CONFIG[rarity];
   return (
     <span style={{
-      fontSize: 10, fontWeight: 700, padding: '2px 7px',
-      borderRadius: 20, letterSpacing: '0.04em',
-      textTransform: 'uppercase',
-      color: cfg.color,
-      background: cfg.bg,
-      border: `1px solid ${cfg.glow}`,
+      fontSize: 9, fontWeight: 800, padding: '2px 6px',
+      borderRadius: 20, letterSpacing: '0.05em', textTransform: 'uppercase',
+      color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.glow}`,
       display: 'inline-flex', alignItems: 'center',
-    }}>
-      {cfg.label}
-    </span>
+    }}>{cfg.label}</span>
   );
 }
 
 // ─── Filter chip ──────────────────────────────────────────────────────────────
 
-function FilterChip({
-  label, active, onClick,
-}: {
-  label: string; active: boolean; onClick: () => void;
-}) {
+function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <motion.button
       onClick={onClick}
-      whileTap={{ scale: 0.92 }}
-      animate={active
-        ? { scale: 1.04, background: 'rgba(124,58,237,.22)', borderColor: 'rgba(124,58,237,.4)', color: '#a78bfa' }
-        : { scale: 1, background: 'rgba(255,255,255,.04)', borderColor: 'rgba(255,255,255,.08)', color: '#64748b' }
-      }
-      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+      whileTap={{ scale: 0.94 }}
       style={{
-        padding: '6px 14px',
-        borderRadius: 20,
-        border: '1px solid',
-        fontSize: 12, fontWeight: 600,
-        cursor: 'pointer',
-        whiteSpace: 'nowrap',
-        flexShrink: 0,
+        padding: '6px 14px', borderRadius: 20,
+        fontSize: 12, fontWeight: active ? 700 : 500,
+        border: active ? '1px solid rgba(124,58,237,.6)' : '1px solid rgba(255,255,255,.08)',
+        background: active
+          ? 'linear-gradient(135deg, rgba(124,58,237,.28), rgba(37,99,235,.2))'
+          : 'rgba(255,255,255,.04)',
+        color: active ? '#c4b5fd' : '#64748b',
+        cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+        transition: 'all .15s',
       }}
     >
       {label}
@@ -180,700 +390,426 @@ function FilterChip({
   );
 }
 
-// ─── Gift SVG art map ─────────────────────────────────────────────────────────
+// ─── Purchase modal ────────────────────────────────────────────────────────────
 
-function GiftArt({ type }: { type: string }) {
-  const map: Record<string, React.ReactNode> = {
-    'fire-heart': (
-      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-        <path d="M26 44C26 44 10 33 10 20C10 14.477 14.477 10 20 10C22.657 10 25.093 11.044 26.911 12.8C26.388 13.996 26 15.462 26 17C26 21.418 29.582 25 34 25C35.692 25 37.26 24.471 38.552 23.575C39.476 24.924 40 26.396 40 28C40 36 26 44 26 44Z"
-          fill="rgba(255,255,255,.15)" stroke="rgba(255,255,255,.5)" strokeWidth="1.5"/>
-        <path d="M40 16C40 22 34 26 34 26C34 26 28 22 28 16C28 12.686 30.686 10 34 10C37.314 10 40 12.686 40 16Z"
-          fill="rgba(255,255,255,.22)" stroke="rgba(255,255,255,.6)" strokeWidth="1.5"/>
-      </svg>
-    ),
-    'star': (
-      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-        <path d="M26 7L30.5 18H42L33 25L36.5 37L26 30.5L15.5 37L19 25L10 18H21.5L26 7Z"
-          fill="rgba(255,255,255,.25)" stroke="rgba(255,255,255,.6)" strokeWidth="1.5" strokeLinejoin="round"/>
-        <path d="M26 13L28.8 20.2H36.4L30.3 24.6L32.6 31.8L26 27.8L19.4 31.8L21.7 24.6L15.6 20.2H23.2L26 13Z"
-          fill="rgba(255,255,255,.15)"/>
-      </svg>
-    ),
-    'rose': (
-      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-        <circle cx="26" cy="20" r="9" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.55)" strokeWidth="1.5"/>
-        <circle cx="26" cy="20" r="5" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.45)" strokeWidth="1"/>
-        <circle cx="26" cy="20" r="2.5" fill="rgba(255,255,255,.4)"/>
-        <path d="M26 29V42" stroke="rgba(255,255,255,.45)" strokeWidth="2" strokeLinecap="round"/>
-        <path d="M22 36L17 31" stroke="rgba(255,255,255,.3)" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M30 34L35 29" stroke="rgba(255,255,255,.2)" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-    'clover': (
-      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-        <circle cx="26" cy="18" r="7" fill="rgba(255,255,255,.2)" stroke="rgba(255,255,255,.5)" strokeWidth="1.5"/>
-        <circle cx="18" cy="28" r="7" fill="rgba(255,255,255,.2)" stroke="rgba(255,255,255,.5)" strokeWidth="1.5"/>
-        <circle cx="34" cy="28" r="7" fill="rgba(255,255,255,.2)" stroke="rgba(255,255,255,.5)" strokeWidth="1.5"/>
-        <circle cx="26" cy="26" r="5" fill="rgba(255,255,255,.12)"/>
-        <path d="M26 32V43" stroke="rgba(255,255,255,.45)" strokeWidth="2" strokeLinecap="round"/>
-        <path d="M22 43H30" stroke="rgba(255,255,255,.3)" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-    'bolt': (
-      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-        <path d="M30 7L17 27H26L22 45L35 25H26L30 7Z"
-          fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.65)" strokeWidth="1.5" strokeLinejoin="round"/>
-      </svg>
-    ),
-    'comet': (
-      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-        <circle cx="34" cy="18" r="9" fill="rgba(255,255,255,.25)" stroke="rgba(255,255,255,.55)" strokeWidth="1.5"/>
-        <path d="M27 25L10 42" stroke="rgba(255,255,255,.45)" strokeWidth="3.5" strokeLinecap="round"/>
-        <path d="M25 28L14 37" stroke="rgba(255,255,255,.2)" strokeWidth="2" strokeLinecap="round"/>
-        <path d="M23 31L15 38" stroke="rgba(255,255,255,.12)" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-    'crown': (
-      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-        <path d="M10 38H42L38 18L30 28L26 14L22 28L14 18L10 38Z"
-          fill="rgba(255,255,255,.22)" stroke="rgba(255,255,255,.6)" strokeWidth="1.5" strokeLinejoin="round"/>
-        <rect x="10" y="38" width="32" height="5" rx="2.5"
-          fill="rgba(255,255,255,.2)" stroke="rgba(255,255,255,.45)" strokeWidth="1"/>
-        <circle cx="26" cy="14" r="2.5" fill="rgba(255,255,255,.6)"/>
-        <circle cx="14" cy="18" r="2.5" fill="rgba(255,255,255,.5)"/>
-        <circle cx="38" cy="18" r="2.5" fill="rgba(255,255,255,.5)"/>
-      </svg>
-    ),
-    'orb': (
-      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-        <circle cx="26" cy="26" r="16" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.4)" strokeWidth="1.5"/>
-        <circle cx="26" cy="26" r="10" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.3)" strokeWidth="1"/>
-        <circle cx="26" cy="26" r="5" fill="rgba(255,255,255,.25)"/>
-        <circle cx="20" cy="20" r="3" fill="rgba(255,255,255,.35)" stroke="rgba(255,255,255,.5)" strokeWidth="0.5"/>
-        <path d="M10 26C10 17.163 17.163 10 26 10" stroke="rgba(255,255,255,.3)" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-  };
-  return <>{map[type] ?? (
-    <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-      <polygon points="26,8 32,20 46,22 36,32 38,46 26,40 14,46 16,32 6,22 20,20"
-        fill="rgba(255,255,255,.2)" stroke="rgba(255,255,255,.5)" strokeWidth="1.5"/>
-    </svg>
-  )}</>;
-}
+type PurchaseTarget =
+  | { kind: 'gift'; item: GiftType }
+  | { kind: 'number'; item: AnonymousNumber }
+  | { kind: 'username'; item: NFTUsername };
 
-// ─── Gift card ────────────────────────────────────────────────────────────────
-
-function GiftCard({
-  gift, index, trending, onTap,
+function PurchaseModal({
+  target,
+  balance,
+  onConfirm,
+  onClose,
 }: {
-  gift: GiftType; index: number; trending: boolean; onTap: (g: GiftType) => void;
+  target: PurchaseTarget;
+  balance: number;
+  onConfirm: () => void;
+  onClose: () => void;
 }) {
-  const cfg = RARITY_CONFIG[gift.rarity];
+  const price =
+    target.kind === 'gift' ? target.item.stars_price :
+    target.kind === 'number' ? target.item.stars_price :
+    target.item.stars_price;
+  const name =
+    target.kind === 'gift' ? target.item.name :
+    target.kind === 'number' ? target.item.number :
+    target.item.username;
+  const rarity =
+    target.kind === 'gift' ? target.item.rarity :
+    target.kind === 'number' ? target.item.rarity :
+    target.item.rarity;
+  const canAfford = balance >= price;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.055, type: 'spring', stiffness: 380, damping: 28 }}
-      whileHover={{ y: -4, boxShadow: `0 12px 40px ${cfg.glow}` }}
-      whileTap={{ scale: 0.95 }}
-      onClick={() => onTap(gift)}
-      style={{
-        borderRadius: 20,
-        overflow: 'hidden',
-        border: `1px solid ${cfg.glow}`,
-        background: 'rgba(255,255,255,.03)',
-        cursor: 'pointer',
-        boxShadow: `0 4px 20px ${cfg.glow}33`,
-        position: 'relative',
-      }}
-    >
-      {/* Trending badge */}
-      {trending && (
-        <div style={{
-          position: 'absolute', top: 10, left: 10, zIndex: 2,
-          display: 'flex', alignItems: 'center', gap: 4,
-          background: 'rgba(239,68,68,.85)', backdropFilter: 'blur(4px)',
-          borderRadius: 10, padding: '3px 8px',
-          fontSize: 10, fontWeight: 700, color: '#fff',
-        }}>
-          <IconFire />
-          Trending
-        </div>
-      )}
-
-      {/* Visual area */}
-      <div style={{
-        height: 120,
-        background: gift.gradient,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        position: 'relative', overflow: 'hidden',
-      }}>
-        <div className="gift-shimmer" style={{ position: 'absolute', inset: 0 }} />
-        <GiftArt type={gift.emoji_fallback} />
-      </div>
-
-      {/* Info */}
-      <div style={{ padding: '12px 14px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9', lineHeight: 1.3 }}>
-            {gift.name}
-          </span>
-          <RarityBadge rarity={gift.rarity} />
-        </div>
-
-        {gift.supply_limit && (
-          <p style={{ fontSize: 10, color: '#4b5563', marginTop: 4 }}>
-            {gift.total_minted.toLocaleString()} / {gift.supply_limit.toLocaleString()} minted
-          </p>
-        )}
-
-        <div style={{
-          marginTop: 10, paddingTop: 8,
-          borderTop: '1px solid rgba(255,255,255,.06)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#fbbf24' }}>
-            <span style={{ fontSize: 13, fontWeight: 800 }}>★</span>
-            <span style={{ fontSize: 14, fontWeight: 800, color: '#f1f5f9' }}>
-              {gift.stars_price.toLocaleString()}
-            </span>
-          </div>
-          <span style={{ fontSize: 11, color: '#334155' }}>Tap</span>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Number card ──────────────────────────────────────────────────────────────
-
-function NumberCard({
-  item, index, onBuy,
-}: {
-  item: AnonymousNumber; index: number; onBuy: (i: AnonymousNumber) => void;
-}) {
-  const cfg = RARITY_CONFIG[item.rarity];
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.055, type: 'spring', stiffness: 380, damping: 28 }}
-      whileTap={{ scale: 0.97 }}
-      onClick={() => onBuy(item)}
-      style={{
-        padding: '16px 18px',
-        borderRadius: 18,
-        background: 'rgba(255,255,255,.03)',
-        border: `1px solid ${cfg.glow}44`,
-        display: 'flex', alignItems: 'center', gap: 14,
-        cursor: 'pointer',
-      }}
-    >
-      {/* Phone icon */}
-      <div style={{
-        width: 46, height: 46, borderRadius: 14,
-        background: cfg.bg,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: cfg.color, flexShrink: 0,
-      }}>
-        <IconPhone />
-      </div>
-
-      {/* Info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', fontFamily: 'ui-monospace, monospace' }}>
-          {item.number}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 5 }}>
-          <RarityBadge rarity={item.rarity} />
-          <span style={{
-            fontSize: 10, fontWeight: 600, color: '#3b82f6',
-            background: 'rgba(59,130,246,.1)', border: '1px solid rgba(59,130,246,.2)',
-            borderRadius: 8, padding: '1px 6px',
-          }}>
-            Fragment
-          </span>
-          <span style={{ fontSize: 11, color: '#374151' }}>Anonymous</span>
-        </div>
-      </div>
-
-      {/* Buy button */}
-      <div style={{
-        padding: '8px 14px', borderRadius: 12, flexShrink: 0, textAlign: 'center',
-        background: 'linear-gradient(135deg, rgba(124,58,237,.22), rgba(37,99,235,.15))',
-        border: '1px solid rgba(124,58,237,.2)',
-      }}>
-        <div style={{ fontSize: 13, fontWeight: 800, color: '#f1f5f9' }}>
-          {item.stars_price.toLocaleString()}
-        </div>
-        <div style={{ fontSize: 10, color: '#fbbf24', marginTop: 1 }}>★ Stars</div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Username card ────────────────────────────────────────────────────────────
-
-function UsernameCard({
-  item, index, onBuy,
-}: {
-  item: NFTUsername; index: number; onBuy: (i: NFTUsername) => void;
-}) {
-  const cfg = RARITY_CONFIG[item.rarity];
-  const name = item.username.startsWith('@') ? item.username.slice(1) : item.username;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.05, type: 'spring', stiffness: 380, damping: 28 }}
-      whileTap={{ scale: 0.97 }}
-      onClick={() => onBuy(item)}
-      style={{
-        padding: '14px 18px',
-        borderRadius: 18,
-        background: 'rgba(255,255,255,.03)',
-        border: `1px solid ${cfg.glow}44`,
-        display: 'flex', alignItems: 'center', gap: 12,
-        cursor: 'pointer',
-      }}
-    >
-      {/* @ badge */}
-      <div style={{
-        width: 44, height: 44, borderRadius: 13,
-        background: cfg.bg,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 20, fontWeight: 900, color: cfg.color,
-        flexShrink: 0,
-      }}>
-        @
-      </div>
-
-      {/* Name + rarity */}
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>
-          <span style={{ color: cfg.color, fontWeight: 900 }}>@</span>{name}
-        </div>
-        <div style={{ marginTop: 4 }}>
-          <RarityBadge rarity={item.rarity} />
-        </div>
-      </div>
-
-      {/* Price */}
-      <div style={{
-        padding: '8px 14px', borderRadius: 12, flexShrink: 0, textAlign: 'center',
-        background: 'linear-gradient(135deg, rgba(124,58,237,.22), rgba(37,99,235,.15))',
-        border: '1px solid rgba(124,58,237,.2)',
-      }}>
-        <div style={{ fontSize: 13, fontWeight: 800, color: '#f1f5f9' }}>
-          {item.stars_price >= 1000
-            ? `${(item.stars_price / 1000).toFixed(0)}k`
-            : item.stars_price.toLocaleString()}
-        </div>
-        <div style={{ fontSize: 10, color: '#fbbf24', marginTop: 1 }}>★ Stars</div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Gift purchase modal ──────────────────────────────────────────────────────
-
-function GiftModal({
-  gift, onClose, onConfirm,
-}: {
-  gift: GiftType; onClose: () => void; onConfirm: () => void;
-}) {
-  const { balance } = useStarsStore();
-  const canAfford = balance >= gift.stars_price;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 200,
-        background: 'rgba(0,0,0,.72)',
-        backdropFilter: 'blur(8px)',
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        padding: '0 0 env(safe-area-inset-bottom, 0px)',
-      }}
-    >
+    <>
+      {/* Backdrop */}
       <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 100, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-        onClick={e => e.stopPropagation()}
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose}
         style={{
-          width: '100%', maxWidth: 480,
-          background: 'rgba(11,11,24,.98)',
-          border: '1px solid rgba(255,255,255,.1)',
-          borderRadius: '26px 26px 0 0',
-          padding: '24px 24px 32px',
+          position: 'fixed', inset: 0, zIndex: 100,
+          background: 'rgba(0,0,0,.6)',
+          backdropFilter: 'blur(8px)',
+        }}
+      />
+      {/* Sheet */}
+      <motion.div
+        initial={{ y: 120, opacity: 0, scale: 0.97 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 100, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+        style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 101,
+          background: 'rgba(15,10,30,.97)',
+          border: '1px solid rgba(255,255,255,.08)',
+          borderTop: `2px solid ${RARITY_CONFIG[rarity].color}`,
+          borderRadius: '28px 28px 0 0',
+          padding: '32px 24px 48px',
+          boxShadow: `0 -20px 60px ${RARITY_CONFIG[rarity].glow}`,
         }}
       >
-        {/* Handle */}
-        <div style={{ width: 38, height: 4, borderRadius: 2, background: 'rgba(255,255,255,.1)', margin: '0 auto 20px' }} />
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>
+            {target.kind === 'gift' ? '🎁' : target.kind === 'number' ? '📱' : '@'}
+          </div>
+          <h3 style={{ fontSize: 20, fontWeight: 800, color: '#f1f5f9', margin: '0 0 6px' }}>
+            {name}
+          </h3>
+          <RarityBadge rarity={rarity} />
+        </div>
 
-        {/* Gift preview */}
+        {/* Price row */}
         <div style={{
-          height: 148, borderRadius: 20,
-          background: gift.gradient,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          marginBottom: 20, position: 'relative', overflow: 'hidden',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '14px 18px', borderRadius: 16,
+          background: 'rgba(255,255,255,.04)',
+          border: '1px solid rgba(255,255,255,.07)',
+          marginBottom: 12,
         }}>
-          <div className="gift-shimmer" style={{ position: 'absolute', inset: 0 }} />
-          <div className="gift-receive-anim">
-            <GiftArt type={gift.emoji_fallback} />
-          </div>
+          <span style={{ fontSize: 14, color: '#94a3b8' }}>Price</span>
+          <span style={{ fontSize: 18, fontWeight: 800, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <IconStar size={15} />{price.toLocaleString()} Stars
+          </span>
         </div>
 
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: '#f1f5f9', marginBottom: 4 }}>
-          {gift.name}
-        </h2>
-        <p style={{ fontSize: 14, color: '#64748b', marginBottom: 18 }}>{gift.description}</p>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <RarityBadge rarity={gift.rarity} />
-          {gift.supply_limit && (
-            <span style={{ fontSize: 12, color: '#374151' }}>
-              {gift.total_minted.toLocaleString()} / {gift.supply_limit.toLocaleString()} minted
-            </span>
-          )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 14, color: '#fbbf24' }}>★</span>
-            <span style={{ fontSize: 18, fontWeight: 800, color: '#f1f5f9' }}>
-              {gift.stars_price.toLocaleString()}
-            </span>
-          </div>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '14px 18px', borderRadius: 16,
+          background: canAfford ? 'rgba(34,197,94,.06)' : 'rgba(239,68,68,.06)',
+          border: `1px solid ${canAfford ? 'rgba(34,197,94,.2)' : 'rgba(239,68,68,.2)'}`,
+          marginBottom: 24,
+        }}>
+          <span style={{ fontSize: 14, color: '#94a3b8' }}>Your balance</span>
+          <span style={{ fontSize: 15, fontWeight: 700, color: canAfford ? '#86efac' : '#fca5a5', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <IconStar size={13} />{balance.toLocaleString()}
+          </span>
         </div>
+
+        <motion.button
+          onClick={canAfford ? onConfirm : undefined}
+          whileTap={canAfford ? { scale: 0.97 } : {}}
+          style={{
+            width: '100%', padding: '16px', borderRadius: 18,
+            border: 'none', cursor: canAfford ? 'pointer' : 'not-allowed',
+            fontSize: 16, fontWeight: 700,
+            background: canAfford
+              ? `linear-gradient(135deg, ${RARITY_CONFIG[rarity].color}, ${RARITY_CONFIG[rarity].color}bb)`
+              : 'rgba(255,255,255,.06)',
+            color: canAfford ? '#fff' : '#4b5563',
+            boxShadow: canAfford ? `0 8px 32px ${RARITY_CONFIG[rarity].glow}` : 'none',
+          }}
+        >
+          {canAfford ? `Buy for ${price.toLocaleString()} ★` : 'Not enough Stars'}
+        </motion.button>
 
         {!canAfford && (
-          <div style={{
-            padding: '10px 14px', borderRadius: 12, marginBottom: 14,
-            background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)',
-            fontSize: 13, color: '#f87171',
-          }}>
-            Insufficient Stars — you have {balance.toLocaleString()} ★
-          </div>
+          <p style={{ textAlign: 'center', fontSize: 12, color: '#475569', marginTop: 10 }}>
+            Need {(price - balance).toLocaleString()} more Stars
+          </p>
         )}
-
-        <button
-          onClick={onConfirm}
-          disabled={!canAfford}
-          className="btn-primary"
-          style={{ marginBottom: 10 }}
-        >
-          Send Gift · {gift.stars_price.toLocaleString()} ★
-        </button>
-        <button onClick={onClose} className="btn-ghost" style={{ width: '100%' }}>
-          Cancel
-        </button>
       </motion.div>
-    </motion.div>
-  );
-}
-
-// ─── Gifts tab content ────────────────────────────────────────────────────────
-
-function GiftsTab({ onGiftTap }: { onGiftTap: (g: GiftType) => void }) {
-  const [filter, setFilter] = useState<GiftFilter>('all');
-  const filters: { id: GiftFilter; label: string }[] = [
-    { id: 'all', label: 'All' },
-    { id: 'legendary', label: 'Legendary' },
-    { id: 'epic', label: 'Epic' },
-    { id: 'rare', label: 'Rare' },
-    { id: 'common', label: 'Common' },
-    { id: 'trending', label: 'Trending' },
-  ];
-
-  const TRENDING_IDS = new Set(['1', '2']);
-
-  const filtered = DEMO_GIFTS.filter(g => {
-    if (filter === 'all') return true;
-    if (filter === 'trending') return TRENDING_IDS.has(g.id);
-    return g.rarity === filter;
-  });
-
-  return (
-    <>
-      {/* Filter chips */}
-      <div style={{
-        display: 'flex', gap: 8, padding: '0 16px 14px',
-        overflowX: 'auto', scrollbarWidth: 'none',
-      }}>
-        {filters.map(f => (
-          <FilterChip key={f.id} label={f.label} active={filter === f.id} onClick={() => setFilter(f.id)} />
-        ))}
-      </div>
-
-      {/* Grid */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: 12, padding: '0 16px',
-      }}>
-        {filtered.map((g, i) => (
-          <GiftCard
-            key={g.id}
-            gift={g}
-            index={i}
-            trending={TRENDING_IDS.has(g.id)}
-            onTap={onGiftTap}
-          />
-        ))}
-      </div>
-      <div style={{ height: 24 }} />
     </>
   );
 }
 
-// ─── Numbers tab content ──────────────────────────────────────────────────────
+// ─── Tab types ─────────────────────────────────────────────────────────────────
 
-function NumbersTab({ onBuy }: { onBuy: (i: AnonymousNumber) => void }) {
-  const [filter, setFilter] = useState<RarityFilter>('all');
-  const filters: { id: RarityFilter; label: string }[] = [
-    { id: 'all', label: 'All' },
-    { id: 'legendary', label: 'Legendary' },
-    { id: 'epic', label: 'Epic' },
-    { id: 'rare', label: 'Rare' },
-    { id: 'common', label: 'Common' },
-  ];
-
-  const filtered = DEMO_NUMBERS.filter(n => filter === 'all' || n.rarity === filter);
-
-  return (
-    <>
-      {/* Filter chips */}
-      <div style={{
-        display: 'flex', gap: 8, padding: '0 16px 14px',
-        overflowX: 'auto', scrollbarWidth: 'none',
-      }}>
-        {filters.map(f => (
-          <FilterChip key={f.id} label={f.label} active={filter === f.id} onClick={() => setFilter(f.id)} />
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 16px' }}>
-        {filtered.map((n, i) => (
-          <NumberCard key={n.id} item={n} index={i} onBuy={onBuy} />
-        ))}
-      </div>
-      <div style={{ height: 24 }} />
-    </>
-  );
-}
-
-// ─── Usernames tab content ────────────────────────────────────────────────────
-
-function UsernamesTab({ onBuy }: { onBuy: (i: NFTUsername) => void }) {
-  const [filter, setFilter] = useState<UsernameFilter>('all');
-  const [sort, setSort] = useState<SortMode>('price-desc');
-
-  const filters: { id: UsernameFilter; label: string }[] = [
-    { id: 'all', label: 'All' },
-    { id: 'trending', label: 'Trending' },
-    { id: 'legendary', label: 'Legendary' },
-    { id: 'epic', label: 'Epic' },
-    { id: 'rare', label: 'Rare' },
-    { id: 'common', label: 'Common' },
-  ];
-
-  const TRENDING_USERNAMES = new Set(['u1', 'u3', 'u5']);
-
-  const filtered = DEMO_USERNAMES
-    .filter(u => {
-      if (filter === 'all') return true;
-      if (filter === 'trending') return TRENDING_USERNAMES.has(u.id);
-      return u.rarity === filter;
-    })
-    .sort((a, b) => sort === 'price-desc' ? b.stars_price - a.stars_price : a.stars_price - b.stars_price);
-
-  return (
-    <>
-      {/* Filter chips */}
-      <div style={{
-        display: 'flex', gap: 8, padding: '0 16px 10px',
-        overflowX: 'auto', scrollbarWidth: 'none',
-      }}>
-        {filters.map(f => (
-          <FilterChip key={f.id} label={f.label} active={filter === f.id} onClick={() => setFilter(f.id)} />
-        ))}
-      </div>
-
-      {/* Sort chips */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px 14px',
-      }}>
-        <span style={{ fontSize: 11, color: '#374151', flexShrink: 0 }}>Price:</span>
-        {(['price-desc', 'price-asc'] as SortMode[]).map(s => (
-          <FilterChip
-            key={s}
-            label={s === 'price-desc' ? 'High → Low' : 'Low → High'}
-            active={sort === s}
-            onClick={() => setSort(s)}
-          />
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 16px' }}>
-        {filtered.map((u, i) => (
-          <UsernameCard key={u.id} item={u} index={i} onBuy={onBuy} />
-        ))}
-      </div>
-      <div style={{ height: 24 }} />
-    </>
-  );
-}
+type TabId = 'gifts' | 'numbers' | 'usernames';
+const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
+  { id: 'gifts',     label: 'Gifts',    icon: <IconGift /> },
+  { id: 'numbers',   label: 'Numbers',  icon: <IconPhone /> },
+  { id: 'usernames', label: 'Names',    icon: <IconAt /> },
+];
+const TAB_ORDER: TabId[] = ['gifts', 'numbers', 'usernames'];
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function MarketplacePage() {
-  const { profile } = useAuthStore();
+  const profile = useAuthStore(s => s.profile);
   const { balance, spendStars } = useStarsStore();
   const { showToast } = useUIStore();
 
   const [tab, setTab] = useState<TabId>('gifts');
-  const [search, setSearch] = useState('');
-  const [selectedGift, setSelectedGift] = useState<GiftType | null>(null);
   const prevTabRef = useRef<TabId>('gifts');
-
-  const direction = TAB_ORDER.indexOf(tab) - TAB_ORDER.indexOf(prevTabRef.current);
+  const [giftFilter, setGiftFilter] = useState<'all'|Rarity|'trending'>('all');
+  const [numFilter, setNumFilter] = useState<'all'|'+999'|'+888'|Rarity>('all');
+  const [purchase, setPurchase] = useState<PurchaseTarget | null>(null);
 
   const switchTab = (next: TabId) => {
     prevTabRef.current = tab;
     setTab(next);
-    setSearch('');
   };
 
-  const handleConfirmGift = async () => {
-    if (!selectedGift || !profile) return;
-    const ok = await spendStars(profile.id, selectedGift.stars_price, 'gift_send', `Sent ${selectedGift.name}`);
+  const prevIdx = TAB_ORDER.indexOf(prevTabRef.current);
+  const currIdx = TAB_ORDER.indexOf(tab);
+  const dir = currIdx >= prevIdx ? 1 : -1;
+
+  const filteredGifts = DEMO_GIFTS.filter(g =>
+    giftFilter === 'all' ? true :
+    giftFilter === 'trending' ? g.supply_limit !== null :
+    g.rarity === giftFilter
+  );
+
+  const filteredNumbers = DEMO_NUMBERS.filter(n =>
+    numFilter === 'all' ? true :
+    numFilter === '+999' ? n.flag === '+999' :
+    numFilter === '+888' ? n.flag === '+888' :
+    n.rarity === numFilter
+  );
+
+  const handleConfirm = async () => {
+    if (!purchase || !profile) return;
+    const price =
+      purchase.kind === 'gift' ? purchase.item.stars_price :
+      purchase.kind === 'number' ? purchase.item.stars_price :
+      purchase.item.stars_price;
+    const name =
+      purchase.kind === 'gift' ? purchase.item.name :
+      purchase.kind === 'number' ? purchase.item.number :
+      purchase.item.username;
+
+    const ok = await spendStars(profile.id, price, 'number_buy', `Купил: ${name}`);
+    setPurchase(null);
     if (ok) {
-      showToast(`${selectedGift.name} sent!`, 'success');
-      setSelectedGift(null);
+      showToast(`✓ ${name} приобретён!`, 'success');
     } else {
-      showToast('Not enough Stars', 'error');
+      showToast('Недостаточно Stars', 'error');
     }
   };
 
-  const handleBuyNumber = async (item: AnonymousNumber) => {
-    if (!profile) return;
-    const ok = await spendStars(profile.id, item.stars_price, 'number_buy', `Bought ${item.number}`);
-    showToast(ok ? `${item.number} is yours!` : 'Not enough Stars', ok ? 'success' : 'error');
-  };
-
-  const handleBuyUsername = async (item: NFTUsername) => {
-    if (!profile) return;
-    const ok = await spendStars(profile.id, item.stars_price, 'username_buy', `Bought ${item.username}`);
-    showToast(ok ? `${item.username} is yours!` : 'Not enough Stars', ok ? 'success' : 'error');
-  };
-
-  const tabs: { id: TabId; label: string }[] = [
-    { id: 'gifts', label: 'Gifts' },
-    { id: 'numbers', label: 'Numbers' },
-    { id: 'usernames', label: 'Usernames' },
-  ];
-
   return (
-    <div style={{
-      height: '100%', display: 'flex', flexDirection: 'column',
-      background: '#07070f', overflow: 'hidden',
-    }}>
-      {/* ── Header ── */}
-      <div style={{
-        padding: '16px 20px 12px',
-        borderBottom: '1px solid rgba(255,255,255,.06)',
-        flexShrink: 0,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.4px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#07070f', overflowY: 'auto' }}>
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        style={{
+          padding: '20px 20px 0',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}
+      >
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#f1f5f9', margin: 0, letterSpacing: '-0.3px' }}>
             Marketplace
           </h1>
-          <div className="stars-badge">
-            <span>★</span>
-            <span>{balance.toLocaleString()}</span>
-          </div>
+          <p style={{ fontSize: 12, color: '#4b5563', margin: '2px 0 0' }}>
+            NFT Gifts · Numbers · Usernames
+          </p>
         </div>
+        {/* Balance pill */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 5,
+          padding: '7px 12px', borderRadius: 20,
+          background: 'rgba(251,191,36,.1)',
+          border: '1px solid rgba(251,191,36,.25)',
+          color: '#fbbf24', fontWeight: 700, fontSize: 13,
+        }}>
+          <IconStar size={12} />{balance.toLocaleString()}
+        </div>
+      </motion.div>
 
-        {/* Search */}
-        <input
-          className="l-input"
-          placeholder={`Search ${tab}...`}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ fontSize: 14 }}
-        />
-      </div>
-
-      {/* ── Tab bar ── */}
-      <div style={{
-        display: 'flex', gap: 6, padding: '12px 16px 0', flexShrink: 0,
-        position: 'relative',
-      }}>
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            onClick={() => switchTab(t.id)}
-            style={{
-              flex: 1, padding: '8px 0', borderRadius: 20, border: 'none',
-              background: 'transparent',
-              color: tab === t.id ? '#a78bfa' : '#4b5563',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              position: 'relative', zIndex: 1,
-            }}
-          >
-            {tab === t.id && (
-              <motion.div
-                layoutId="tab-bg"
+      {/* Tab bar */}
+      <div style={{ padding: '16px 20px 0', position: 'relative' }}>
+        <div style={{
+          display: 'flex', gap: 4,
+          background: 'rgba(255,255,255,.04)',
+          border: '1px solid rgba(255,255,255,.07)',
+          borderRadius: 16, padding: 4,
+        }}>
+          {TABS.map(t => {
+            const active = tab === t.id;
+            return (
+              <motion.button
+                key={t.id}
+                onClick={() => switchTab(t.id)}
+                whileTap={{ scale: 0.95 }}
                 style={{
-                  position: 'absolute', inset: 0, borderRadius: 20,
-                  background: 'linear-gradient(135deg, rgba(124,58,237,.28), rgba(37,99,235,.18))',
-                  zIndex: -1,
+                  flex: 1, padding: '10px 0', borderRadius: 13,
+                  border: 'none', cursor: 'pointer',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                  position: 'relative', background: 'transparent',
                 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 36 }}
-              />
-            )}
-            {t.label}
-          </button>
-        ))}
+              >
+                {active && (
+                  <motion.div
+                    layoutId="tab-bg"
+                    style={{
+                      position: 'absolute', inset: 0, borderRadius: 13,
+                      background: 'linear-gradient(135deg, rgba(124,58,237,.4), rgba(37,99,235,.3))',
+                      boxShadow: '0 2px 16px rgba(124,58,237,.25)',
+                    }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 36 }}
+                  />
+                )}
+                <span style={{
+                  position: 'relative', zIndex: 1,
+                  color: active ? '#c4b5fd' : '#4b5563',
+                  transition: 'color .15s',
+                }}>{t.icon}</span>
+                <span style={{
+                  position: 'relative', zIndex: 1,
+                  fontSize: 11, fontWeight: active ? 700 : 500,
+                  color: active ? '#c4b5fd' : '#4b5563',
+                  transition: 'color .15s',
+                }}>{t.label}</span>
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* ── Content ── */}
-      <div className="scroll-container" style={{ flex: 1, paddingTop: 16 }}>
-        <AnimatePresence mode="wait" initial={false} custom={direction}>
+      {/* Filter chips */}
+      <AnimatePresence mode="wait">
+        {tab === 'gifts' && (
           <motion.div
-            key={tab}
-            custom={direction}
-            initial={{ opacity: 0, x: direction * 20 }}
+            key="gift-filters"
+            initial={{ opacity: 0, x: dir * 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction * -20 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 34 }}
+            exit={{ opacity: 0, x: -dir * 20 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            style={{ padding: '12px 20px', display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none' }}
           >
-            {tab === 'gifts' && (
-              <GiftsTab onGiftTap={setSelectedGift} />
-            )}
-            {tab === 'numbers' && (
-              <NumbersTab onBuy={handleBuyNumber} />
-            )}
-            {tab === 'usernames' && (
-              <UsernamesTab onBuy={handleBuyUsername} />
-            )}
+            {(['all','legendary','epic','rare','common','trending'] as const).map(f => (
+              <FilterChip key={f} label={f === 'all' ? 'All' : f === 'trending' ? '🔥 Hot' : f.charAt(0).toUpperCase()+f.slice(1)} active={giftFilter === f} onClick={() => setGiftFilter(f)} />
+            ))}
           </motion.div>
+        )}
+        {tab === 'numbers' && (
+          <motion.div
+            key="num-filters"
+            initial={{ opacity: 0, x: dir * 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -dir * 20 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            style={{ padding: '12px 20px', display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none' }}
+          >
+            {(['all','+999','+888','legendary','epic','rare','common'] as const).map(f => (
+              <FilterChip key={f} label={f === 'all' ? 'All' : f} active={numFilter === f} onClick={() => setNumFilter(f)} />
+            ))}
+          </motion.div>
+        )}
+        {tab === 'usernames' && (
+          <motion.div
+            key="un-filters"
+            initial={{ opacity: 0, x: dir * 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -dir * 20 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            style={{ padding: '12px 20px' }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Content */}
+      <div style={{ flex: 1, padding: '0 16px 100px' }}>
+        <AnimatePresence mode="wait" initial={false}>
+          {/* GIFTS */}
+          {tab === 'gifts' && (
+            <motion.div
+              key="gifts"
+              initial={{ opacity: 0, x: dir * 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -dir * 24 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 12,
+              }}
+            >
+              {filteredGifts.map((gift, i) => (
+                <motion.div
+                  key={gift.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05, duration: 0.25, ease: 'easeOut' }}
+                >
+                  <GiftCard gift={gift} onBuy={g => setPurchase({ kind:'gift', item:g })} />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* NUMBERS */}
+          {tab === 'numbers' && (
+            <motion.div
+              key="numbers"
+              initial={{ opacity: 0, x: dir * 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -dir * 24 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+            >
+              {/* +999 premium banner */}
+              {(numFilter === 'all' || numFilter === '+999') && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    padding: '12px 16px',
+                    borderRadius: 16,
+                    background: 'linear-gradient(135deg, rgba(245,158,11,.12), rgba(124,58,237,.08))',
+                    border: '1px solid rgba(245,158,11,.3)',
+                    display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4,
+                  }}
+                >
+                  <span style={{ fontSize: 22 }}>💎</span>
+                  <div>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: '#fbbf24', margin: 0 }}>+999 Premium Numbers</p>
+                    <p style={{ fontSize: 11, color: '#78716c', margin: 0 }}>Ultra-rare anonymous numbers — not linked to any SIM</p>
+                  </div>
+                </motion.div>
+              )}
+
+              {filteredNumbers.map((num, i) => (
+                <motion.div
+                  key={num.id}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04, duration: 0.22, ease: 'easeOut' }}
+                >
+                  <NumberCard num={num} onBuy={n => setPurchase({ kind:'number', item:n })} />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* USERNAMES */}
+          {tab === 'usernames' && (
+            <motion.div
+              key="usernames"
+              initial={{ opacity: 0, x: dir * 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -dir * 24 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 9 }}
+            >
+              {DEMO_USERNAMES.map((un, i) => (
+                <motion.div
+                  key={un.id}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04, duration: 0.22, ease: 'easeOut' }}
+                >
+                  <UsernameCard un={un} onBuy={u => setPurchase({ kind:'username', item:u })} />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
-      {/* ── Gift modal ── */}
+      {/* Purchase modal */}
       <AnimatePresence>
-        {selectedGift && (
-          <GiftModal
-            gift={selectedGift}
-            onClose={() => setSelectedGift(null)}
-            onConfirm={handleConfirmGift}
+        {purchase && (
+          <PurchaseModal
+            target={purchase}
+            balance={balance}
+            onConfirm={handleConfirm}
+            onClose={() => setPurchase(null)}
           />
         )}
       </AnimatePresence>

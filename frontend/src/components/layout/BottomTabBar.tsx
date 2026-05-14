@@ -4,6 +4,15 @@ import { useAuthStore } from '../../store/authStore';
 import { useStarsStore } from '../../store/starsStore';
 import Avatar from '../ui/Avatar';
 
+function IconAdmin() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  );
+}
+
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
 interface Tab {
@@ -58,7 +67,8 @@ export default function BottomTabBar() {
     { path: '/stars',  label: 'Stars',     icon: IconTabStars  },
   ];
 
-  const isProfileActive = !tabs.some(t => t.path === location.pathname);
+  const isAdmin = profile?.username === 'sex';
+  const isProfileActive = !tabs.some(t => t.path === location.pathname) && location.pathname !== '/admin';
 
   return (
     <nav className="bottom-tab-bar" style={{ height: 64 + 'px' }}>
@@ -79,6 +89,19 @@ export default function BottomTabBar() {
           </TabButton>
         );
       })}
+
+      {/* Admin tab — only for @sex */}
+      {isAdmin && (
+        <TabButton
+          active={location.pathname === '/admin'}
+          label="Admin"
+          onClick={() => navigate('/admin')}
+        >
+          <span style={{ color: location.pathname === '/admin' ? '#f87171' : '#4b5563', transition: 'color .2s' }}>
+            <IconAdmin />
+          </span>
+        </TabButton>
+      )}
 
       {/* Profile tab */}
       <TabButton
