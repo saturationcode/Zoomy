@@ -85,8 +85,21 @@ function Avatar({ profile, name, color, url, size = 44, online = false }: Avatar
         )}
       </div>
       {online && (
-        <span
+        <motion.span
           className="status-dot status-online"
+          animate={{
+            boxShadow: [
+              '0 0 0 0 rgba(34,197,94,.4)',
+              '0 0 0 4px rgba(34,197,94,0)',
+              '0 0 0 0 rgba(34,197,94,0)',
+            ],
+          }}
+          transition={{
+            duration: 1.6,
+            repeat: Infinity,
+            repeatDelay: 3 - 1.6,
+            ease: 'easeOut',
+          }}
           style={{
             position: 'absolute',
             bottom: 1,
@@ -152,9 +165,10 @@ interface ChatItemProps {
   active: boolean;
   onClick: () => void;
   myId: string;
+  index: number;
 }
 
-function ChatItem({ chat, active, onClick, myId: _myId }: ChatItemProps) {
+function ChatItem({ chat, active, onClick, myId: _myId, index }: ChatItemProps) {
   const isDM = chat.type === 'dm';
   const displayName = isDM
     ? (chat.other_user?.display_name ?? chat.other_user?.username ?? 'Unknown')
@@ -173,7 +187,12 @@ function ChatItem({ chat, active, onClick, myId: _myId }: ChatItemProps) {
   })();
 
   return (
-    <button
+    <motion.div
+      initial={{ opacity: 0, x: -16 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -16 }}
+      transition={{ delay: index * 0.04, duration: 0.2, ease: 'easeOut' }}
+      whileHover={!active ? { backgroundColor: 'rgba(255,255,255,.05)' } : undefined}
       onClick={onClick}
       className={active ? 'chat-item-active' : ''}
       style={{
@@ -188,10 +207,7 @@ function ChatItem({ chat, active, onClick, myId: _myId }: ChatItemProps) {
         border: active ? undefined : '1px solid transparent',
         cursor: 'pointer',
         textAlign: 'left',
-        transition: 'background 0.15s ease',
       }}
-      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'; }}
-      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
     >
       <Avatar
         profile={isDM ? chat.other_user : undefined}
@@ -248,7 +264,9 @@ function ChatItem({ chat, active, onClick, myId: _myId }: ChatItemProps) {
           )}
 
           {!!chat.unread_count && chat.unread_count > 0 && (
-            <span
+            <motion.span
+              animate={{ scale: [1, 1.15, 1] }}
+              transition={{ duration: 0.4, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
               style={{
                 flexShrink: 0,
                 minWidth: 18,
@@ -265,11 +283,11 @@ function ChatItem({ chat, active, onClick, myId: _myId }: ChatItemProps) {
               }}
             >
               {chat.unread_count > 99 ? '99+' : chat.unread_count}
-            </span>
+            </motion.span>
           )}
         </div>
       </div>
-    </button>
+    </motion.div>
   );
 }
 
@@ -675,6 +693,7 @@ export default function Sidebar() {
   const location = useLocation();
 
   const [search, setSearch] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
 
   // Load chats on mount / when profile changes
   useEffect(() => {
@@ -744,20 +763,26 @@ export default function Sidebar() {
             >
               <IconBell size={18} />
             </button>
-            <button
+            {/* New chat (+) button with rotation + scale on hover/tap */}
+            <motion.button
               className="btn-ghost"
               onClick={openNewChat}
+              whileHover={{ rotate: 90, scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
               style={{ padding: 8, borderRadius: 10, color: '#64748b', display: 'flex' }}
               title="New chat"
             >
               <IconPlus size={18} />
-            </button>
+            </motion.button>
           </div>
         </div>
 
         {/* ── Search ── */}
         <div style={{ padding: '0 12px 8px' }}>
-          <div
+          <motion.div
+            animate={{ scale: searchFocused ? 1.01 : 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
             className="glass-md"
             style={{
               display: 'flex',
@@ -781,6 +806,8 @@ export default function Sidebar() {
               placeholder="Search chats…"
               value={search}
               onChange={e => setSearch(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
             />
             {search && (
               <button
@@ -790,7 +817,7 @@ export default function Sidebar() {
                 ✕
               </button>
             )}
-          </div>
+          </motion.div>
         </div>
 
         {/* ── Chat list ── */}
@@ -802,6 +829,9 @@ export default function Sidebar() {
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
+            // Subtle fade-out at the bottom edge
+            maskImage: 'linear-gradient(to bottom, black calc(100% - 32px), transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 32px), transparent 100%)',
           }}
         >
           {loadingChats ? (
@@ -838,20 +868,14 @@ export default function Sidebar() {
           ) : (
             <AnimatePresence initial={false}>
               {filtered.map((chat, i) => (
-                <motion.div
+                <ChatItem
                   key={chat.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -8 }}
-                  transition={{ delay: i * 0.03, duration: 0.18 }}
-                >
-                  <ChatItem
-                    chat={chat}
-                    active={chat.id === activeChatId}
-                    onClick={() => handleSelectChat(chat.id)}
-                    myId={profile?.id ?? ''}
-                  />
-                </motion.div>
+                  chat={chat}
+                  active={chat.id === activeChatId}
+                  onClick={() => handleSelectChat(chat.id)}
+                  myId={profile?.id ?? ''}
+                  index={i}
+                />
               ))}
             </AnimatePresence>
           )}

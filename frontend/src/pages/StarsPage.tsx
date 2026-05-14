@@ -56,6 +56,36 @@ function txIcon(type: StarsTransaction['type']): string {
   return map[type] ?? '⭐';
 }
 
+// ─── Floating star particle ───────────────────────────────────────────────────
+
+function FloatingStar({ delay, x }: { delay: number; x: string }) {
+  return (
+    <motion.span
+      initial={{ opacity: 0, y: 0 }}
+      animate={{ opacity: [0, 0.55, 0], y: -52 }}
+      transition={{
+        duration: 2.4,
+        delay,
+        repeat: Infinity,
+        repeatDelay: 1.2,
+        ease: 'easeOut',
+      }}
+      style={{
+        position: 'absolute',
+        bottom: 18,
+        left: x,
+        fontSize: 14,
+        color: '#fbbf24',
+        pointerEvents: 'none',
+        filter: 'drop-shadow(0 0 4px rgba(251,191,36,.7))',
+        userSelect: 'none',
+      }}
+    >
+      ★
+    </motion.span>
+  );
+}
+
 // ─── Stars balance header ─────────────────────────────────────────────────────
 
 function BalanceCard({ balance }: { balance: number }) {
@@ -76,6 +106,12 @@ function BalanceCard({ balance }: { balance: number }) {
     >
       {/* Background shimmer */}
       <div className="gift-shimmer" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />
+
+      {/* Floating star particles */}
+      <FloatingStar delay={0}    x="18%" />
+      <FloatingStar delay={0.7}  x="42%" />
+      <FloatingStar delay={1.3}  x="65%" />
+      <FloatingStar delay={0.4}  x="82%" />
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 6 }}>
         <span style={{ color: '#fbbf24', filter: 'drop-shadow(0 0 6px rgba(251,191,36,.6))' }}>

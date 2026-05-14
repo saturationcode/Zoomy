@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Message } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { useChatStore } from '../../store/chatStore';
@@ -208,10 +208,25 @@ export default function MessageList({ chatId, replyTo: _replyTo, setReplyTo }: M
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom on new messages
+  // Track previous message count to detect newly added messages vs. initial load
+  const prevCountRef = useRef<number>(0);
+  const isInitialLoadRef = useRef<boolean>(true);
+
+  // Auto-scroll to bottom on new messages (smooth)
   useEffect(() => {
     if (!bottomRef.current) return;
     bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+  }, [messages.length]);
+
+  // After first render with messages, mark initial load done
+  useEffect(() => {
+    if (messages.length > 0 && isInitialLoadRef.current) {
+      // Allow a tick so stagger animations play, then mark done
+      const id = setTimeout(() => {
+        isInitialLoadRef.current = false;
+      }, messages.length * 40 + 350);
+      return () => clearTimeout(id);
+    }
   }, [messages.length]);
 
   // Pinned message (first one found)
@@ -238,13 +253,14 @@ export default function MessageList({ chatId, replyTo: _replyTo, setReplyTo }: M
   // Build grouped list with date separators
   type ListItem =
     | { kind: 'date'; label: string; key: string }
-    | { kind: 'message'; message: Message; showAvatar: boolean; key: string };
+    | { kind: 'message'; message: Message; showAvatar: boolean; key: string; index: number };
 
   const listItems = useMemo((): ListItem[] => {
     const items: ListItem[] = [];
     let lastDate: Date | null = null;
     let lastSenderId: string | null = null;
     let lastTimestamp: number | null = null;
+    let msgIndex = 0;
 
     for (const msg of messages) {
       const msgDate = new Date(msg.created_at);
@@ -268,8 +284,10 @@ export default function MessageList({ chatId, replyTo: _replyTo, setReplyTo }: M
         message: msg,
         showAvatar: !isGrouped,
         key: msg.id,
+        index: msgIndex,
       });
 
+      msgIndex++;
       lastSenderId = msg.sender_id;
       lastTimestamp = msgDate.getTime();
     }
@@ -283,7 +301,11 @@ export default function MessageList({ chatId, replyTo: _replyTo, setReplyTo }: M
     <div
       ref={containerRef}
       className="flex flex-col flex-1 overflow-y-auto"
-      style={{ minHeight: 0 }}
+      style={{
+        minHeight: 0,
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehaviorY: 'contain',
+      } as React.CSSProperties}
     >
       {/* Pinned banner */}
       {pinnedMessage && (
@@ -301,23 +323,54 @@ export default function MessageList({ chatId, replyTo: _replyTo, setReplyTo }: M
       {/* Message list */}
       {messages.length > 0 && (
         <div className="py-3">
-          {listItems.map((item) => {
-            if (item.kind === 'date') {
-              return <DateSeparator key={item.key} label={item.label} />;
-            }
-            const { message, showAvatar } = item;
-            const isOwn = message.sender_id === profile?.id;
-            return (
-              <MessageBubble
-                key={item.key}
-                message={message}
-                isOwn={isOwn}
-                showAvatar={showAvatar}
-                onReact={handleReact}
-                onReply={setReplyTo}
-              />
-            );
-          })}
+          <AnimatePresence initial={false}>
+            {listItems.map((item) => {
+              if (item.kind === 'date') {
+                return (
+                  <motion.div
+                    key={item.key}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  >
+                    <DateSeparator label={item.label} />
+                  </motion.div>
+                );
+              }
+
+              const { message, showAvatar, index } = item;
+              const isOwn = message.sender_id === profile?.id;
+
+              // Stagger delay only during initial load
+              const staggerDelay = isInitialLoadRef.current
+                ? Math.min(index * 0.04, 0.3)
+                : 0;
+
+              return (
+                <motion.div
+                  key={item.key}
+                  initial={{ opacity: 0, y: 12, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 380,
+                    damping: 30,
+                    delay: staggerDelay,
+                  }}
+                >
+                  <MessageBubble
+                    message={message}
+                    isOwn={isOwn}
+                    showAvatar={showAvatar}
+                    onReact={handleReact}
+                    onReply={setReplyTo}
+                  />
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
 
           {/* Typing indicator stub */}
           {/* <TypingIndicator /> */}

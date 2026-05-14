@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Message, ReactionType } from '../../types';
+import type { Message, ReactionType, Rarity } from '../../types';
+import { RARITY_CONFIG } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import Avatar from '../ui/Avatar';
 import {
@@ -19,6 +20,11 @@ import {
   ReactionLaugh,
   ReactionGhost,
 } from '../icons';
+
+// ─── Spring preset ────────────────────────────────────────────────────────────
+
+const SPRING = { type: 'spring' as const, stiffness: 380, damping: 30 };
+const SPRING_SOFT = { type: 'spring' as const, stiffness: 300, damping: 26 };
 
 // ─── Reaction registry ────────────────────────────────────────────────────────
 
@@ -165,30 +171,38 @@ function ReplyPreview({ reply }: { reply: Message }) {
   const senderName = reply.sender?.display_name ?? reply.sender?.username ?? 'Unknown';
 
   return (
-    <div
-      className="mb-2 pl-3 rounded-lg"
-      style={{
-        borderLeft: '3px solid rgba(255,255,255,0.4)',
-        background: 'rgba(255,255,255,0.07)',
-        padding: '6px 10px 6px 10px',
-      }}
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={SPRING_SOFT}
+      style={{ overflow: 'hidden' }}
     >
-      <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.85, marginBottom: 2 }}>
-        {senderName}
-      </div>
       <div
+        className="mb-2 pl-3 rounded-lg"
         style={{
-          fontSize: 12,
-          opacity: 0.65,
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          maxWidth: 240,
+          borderLeft: '3px solid rgba(255,255,255,0.4)',
+          background: 'rgba(255,255,255,0.07)',
+          padding: '6px 10px 6px 10px',
         }}
       >
-        {text}
+        <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.85, marginBottom: 2 }}>
+          {senderName}
+        </div>
+        <div
+          style={{
+            fontSize: 12,
+            opacity: 0.65,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: 240,
+          }}
+        >
+          {text}
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -233,10 +247,10 @@ function ContextMenu({
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <motion.div
         ref={menuRef}
-        initial={{ opacity: 0, scale: 0.92 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.92 }}
-        transition={{ duration: 0.12 }}
+        initial={{ opacity: 0, scale: 0.82, y: 6 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.82, y: 6 }}
+        transition={SPRING}
         className="glass-strong fixed z-50 rounded-2xl overflow-hidden"
         style={{
           left: safeX,
@@ -274,10 +288,10 @@ function ReactionPicker({ onPick, onClose }: { onPick: (r: ReactionType) => void
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <motion.div
-        initial={{ opacity: 0, scale: 0.88, y: 8 }}
+        initial={{ opacity: 0, scale: 0.6, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.88, y: 8 }}
-        transition={{ duration: 0.14 }}
+        exit={{ opacity: 0, scale: 0.6, y: 8 }}
+        transition={SPRING}
         className="glass-strong absolute z-50 rounded-2xl flex items-center gap-1 px-3 py-2"
         style={{
           bottom: 'calc(100% + 8px)',
@@ -288,17 +302,18 @@ function ReactionPicker({ onPick, onClose }: { onPick: (r: ReactionType) => void
         }}
       >
         {REACTIONS.map(({ type, Icon, color }) => (
-          <button
+          <motion.button
             key={type}
+            whileHover={{ scale: 1.3 }}
+            whileTap={{ scale: 0.9 }}
+            transition={SPRING}
             onClick={() => { onPick(type); onClose(); }}
-            className="flex items-center justify-center rounded-xl transition-transform"
+            className="flex items-center justify-center rounded-xl"
             style={{ width: 34, height: 34 }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.3)')}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)')}
             aria-label={type}
           >
             <Icon size={20} style={{ color } as React.CSSProperties} />
-          </button>
+          </motion.button>
         ))}
       </motion.div>
     </>
@@ -357,6 +372,104 @@ function NFTCard({ meta }: { meta: Record<string, unknown> }) {
         </span>
       </div>
     </div>
+  );
+}
+
+// ─── Gift card ────────────────────────────────────────────────────────────────
+
+function GiftCard({ meta }: { meta: Record<string, unknown> }) {
+  const name = (meta.name as string) ?? 'Gift';
+  const stars = (meta.stars_price as number) ?? 0;
+  const rarity = ((meta.rarity as string) ?? 'common') as Rarity;
+  const gradient = (meta.gradient as string) ?? 'linear-gradient(135deg,#7c3aed,#2563eb)';
+  const imageUrl = meta.image_url as string | undefined;
+  const config = RARITY_CONFIG[rarity] ?? RARITY_CONFIG.common;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.88 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={SPRING}
+      className="rounded-2xl overflow-hidden"
+      style={{
+        width: 200,
+        background: config.bg,
+        border: `1px solid ${config.color}55`,
+        boxShadow: `0 0 24px ${config.glow}`,
+      }}
+    >
+      {/* Gradient header */}
+      <div
+        style={{
+          height: 120,
+          background: gradient,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+        }}
+      >
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }}
+          />
+        ) : (
+          <svg width={44} height={44} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.5">
+            {/* Gift box icon */}
+            <polyline points="20 12 20 22 4 22 4 12" />
+            <rect x="2" y="7" width="20" height="5" />
+            <line x1="12" y1="22" x2="12" y2="7" />
+            <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+            <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+          </svg>
+        )}
+        {/* Rarity badge */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            fontSize: 9,
+            fontWeight: 800,
+            padding: '2px 7px',
+            borderRadius: 8,
+            background: 'rgba(0,0,0,0.45)',
+            color: config.color,
+            textTransform: 'uppercase',
+            letterSpacing: '0.07em',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          {config.label}
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="px-3 py-2">
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9', marginBottom: 4 }}>
+          {name}
+        </div>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: 11,
+            fontWeight: 600,
+            color: config.color,
+            background: config.bg,
+            border: `1px solid ${config.color}44`,
+            padding: '2px 8px',
+            borderRadius: 8,
+          }}
+        >
+          <span style={{ fontSize: 12 }}>★</span>
+          {stars} Stars
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -551,6 +664,9 @@ export default function MessageBubble({
       case 'nft':
         return <NFTCard meta={message.media_meta ?? {}} />;
 
+      case 'gift':
+        return <GiftCard meta={message.media_meta ?? {}} />;
+
       default:
         return (
           <p style={{ fontSize: 15, color: isOwn ? '#fff' : '#e2e8f0' }}>
@@ -577,7 +693,6 @@ export default function MessageBubble({
       )}
       {isOwn && (
         <span style={{ color: 'rgba(255,255,255,0.55)' }}>
-          {/* Always show double-check for delivered; you'd pass read state as a prop if needed */}
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="17 6 9 17 4 12" />
             <polyline points="22 6 12 17" />
@@ -590,10 +705,7 @@ export default function MessageBubble({
   // ── Full render ───────────────────────────────────────────────────────────
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 6, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+    <div
       className={`flex ${isOwn ? 'flex-row-reverse' : 'flex-row'} items-end gap-2 px-4 my-[2px]`}
     >
       {/* Avatar for incoming messages */}
@@ -624,9 +736,12 @@ export default function MessageBubble({
             )}
           </AnimatePresence>
 
-          {/* Bubble */}
-          <div
+          {/* Bubble — animated container */}
+          <motion.div
             ref={bubbleRef}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            transition={SPRING}
             className={isOwn ? 'msg-out' : 'msg-in'}
             onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}
@@ -645,38 +760,48 @@ export default function MessageBubble({
             }}
           >
             {/* Reply preview */}
-            {message.reply_to && <ReplyPreview reply={message.reply_to} />}
+            <AnimatePresence>
+              {message.reply_to && <ReplyPreview reply={message.reply_to} />}
+            </AnimatePresence>
 
             {renderContent()}
             {footer}
-          </div>
+          </motion.div>
         </div>
 
         {/* Reactions row */}
         {reactionGroups.size > 0 && (
           <div className="flex flex-wrap gap-1 mt-1 px-1">
-            {Array.from(reactionGroups.entries()).map(([type, { count, hasOwn }]) => (
-              <button
-                key={type}
-                onClick={() => handleReactionClick(type)}
-                className="flex items-center gap-1 rounded-full transition-all"
-                style={{
-                  padding: '3px 8px',
-                  fontSize: 12,
-                  background: hasOwn
-                    ? 'rgba(124,58,237,0.22)'
-                    : 'rgba(255,255,255,0.06)',
-                  border: hasOwn
-                    ? '1px solid rgba(124,58,237,0.4)'
-                    : '1px solid rgba(255,255,255,0.08)',
-                  color: '#e2e8f0',
-                  fontWeight: 500,
-                }}
-              >
-                {reactionIcon(type, 13)}
-                <span>{count}</span>
-              </button>
-            ))}
+            <AnimatePresence>
+              {Array.from(reactionGroups.entries()).map(([type, { count, hasOwn }]) => (
+                <motion.button
+                  key={type}
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.6 }}
+                  transition={SPRING}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => handleReactionClick(type)}
+                  className="flex items-center gap-1 rounded-full"
+                  style={{
+                    padding: '3px 8px',
+                    fontSize: 12,
+                    background: hasOwn
+                      ? 'rgba(124,58,237,0.22)'
+                      : 'rgba(255,255,255,0.06)',
+                    border: hasOwn
+                      ? '1px solid rgba(124,58,237,0.4)'
+                      : '1px solid rgba(255,255,255,0.08)',
+                    color: '#e2e8f0',
+                    fontWeight: 500,
+                  }}
+                >
+                  {reactionIcon(type, 13)}
+                  <span>{count}</span>
+                </motion.button>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </div>
@@ -697,6 +822,6 @@ export default function MessageBubble({
           />
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }
