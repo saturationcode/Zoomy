@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
+import ZIcon from '../components/ZIcon.jsx';
 
 // ── Z-Coins badge ────────────────────────────────────────────────────────────
 function ZBadge({ n, size = 'md' }) {
@@ -13,13 +14,12 @@ function ZBadge({ n, size = 'md' }) {
     : amt.toLocaleString();
   return (
     <div style={{
-      display:'inline-flex', alignItems:'center', gap: big ? 7 : 5,
-      background:'linear-gradient(135deg,#fef3c7,#fde68a)',
-      border:'1.5px solid rgba(245,158,11,.35)',
-      borderRadius:20, padding: big ? '8px 14px' : '5px 10px',
-      boxShadow:'0 2px 10px rgba(245,158,11,.2)',
+      display:'inline-flex', alignItems:'center', gap: big ? 6 : 4,
+      background:'linear-gradient(135deg,rgba(245,158,11,.1),rgba(245,158,11,.07))',
+      border:'1.5px solid rgba(245,158,11,.28)',
+      borderRadius:20, padding: big ? '7px 14px' : '4px 10px',
     }}>
-      <span style={{ fontSize: big ? 17 : 13, lineHeight:1 }}>🪙</span>
+      <ZIcon size={big ? 18 : 14}/>
       <div style={{ display:'flex', flexDirection:'column', lineHeight:1 }}>
         <span style={{
           fontWeight:900, fontSize: big ? 16 : 13,

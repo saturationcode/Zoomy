@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
+import ZIcon from '../components/ZIcon.jsx';
 
+// ── Data ──────────────────────────────────────────────────────────────────────
 const TIERS = [
   { coins: 100,   price: 129,   popular: false },
   { coins: 200,   price: 249,   popular: false },
@@ -19,52 +21,22 @@ async function tryApplePay(coins, price) {
   try {
     const req = new window.PaymentRequest(
       [{ supportedMethods: 'https://apple.com/apple-pay', data: {
-          version: 3,
-          merchantIdentifier: 'merchant.app.zoomy',
+          version: 3, merchantIdentifier: 'merchant.app.zoomy',
           merchantCapabilities: ['supports3DS'],
-          supportedNetworks: ['masterCard', 'visa'],
-          countryCode: 'RU',
+          supportedNetworks: ['masterCard', 'visa'], countryCode: 'RU',
         }},
        { supportedMethods: 'basic-card', data: { supportedNetworks:['visa','mastercard'] } }
       ],
-      {
-        total: { label: `${coins.toLocaleString()} Z-Coins`, amount: { currency:'RUB', value: String(price) } },
-        displayItems: [{ label:'Z-Coins Zoomy', amount:{ currency:'RUB', value: String(price) } }],
-      }
+      { total: { label:`${coins} Z-Coins`, amount:{ currency:'RUB', value:String(price) } } }
     );
-    const canPay = await req.canMakePayment();
-    if (!canPay) return false;
+    if (!await req.canMakePayment()) return false;
     const result = await req.show();
     await result.complete('success');
     return true;
-  } catch (_) {
-    return false;
-  }
+  } catch (_) { return false; }
 }
 
-// ── Shared Z-Coins badge ────────────────────────────────────────────────────
-function ZBadge({ n }) {
-  return (
-    <div style={{
-      display:'flex', alignItems:'center', gap:7,
-      background:'linear-gradient(135deg,#fef3c7,#fde68a)',
-      border:'1.5px solid rgba(245,158,11,.35)',
-      borderRadius:22, padding:'8px 16px',
-      boxShadow:'0 2px 12px rgba(245,158,11,.18)',
-    }}>
-      <span style={{ fontSize:18, lineHeight:1 }}>🪙</span>
-      <div style={{ display:'flex', flexDirection:'column', lineHeight:1 }}>
-        <span style={{
-          fontWeight:900, fontSize:17,
-          background:'linear-gradient(135deg,#d97706,#b45309)',
-          WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
-        }}>{(n == null ? 0 : n).toLocaleString()}</span>
-        <span style={{ fontSize:10, fontWeight:700, color:'#92400e', marginTop:1, letterSpacing:'.04em' }}>Z-COINS</span>
-      </div>
-    </div>
-  );
-}
-
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function ShopPage() {
   const { auth } = useAuth();
   const [balance,   setBalance]   = useState(auth.user.z_coins || 0);
@@ -74,22 +46,22 @@ export default function ShopPage() {
   const [toast,     setToast]     = useState(null);
   const [promoUsed, setPromoUsed] = useState(false);
 
-  // Always fetch fresh balance from DB (may be stale if coins spent in Marketplace)
   useEffect(() => {
     supabase.from('profiles').select('z_coins').eq('id', auth.user.id).single()
-      .then(({ data }) => { if (data) { setBalance(data.z_coins || 0); auth.user.z_coins = data.z_coins || 0; } });
+      .then(({ data }) => {
+        if (data) { setBalance(data.z_coins || 0); auth.user.z_coins = data.z_coins || 0; }
+      });
   }, [auth.user.id]);
 
-  const showToast = (msg, type='success') => {
+  const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   };
 
   const addCoins = async (amount) => {
-    const newBal = balance + amount;
-    const { error } = await supabase.from('profiles')
-      .update({ z_coins: newBal }).eq('id', auth.user.id);
-    if (!error) { setBalance(newBal); auth.user.z_coins = newBal; }
+    const nb = balance + amount;
+    const { error } = await supabase.from('profiles').update({ z_coins: nb }).eq('id', auth.user.id);
+    if (!error) { setBalance(nb); auth.user.z_coins = nb; }
     return !error;
   };
 
@@ -100,189 +72,232 @@ export default function ShopPage() {
     }
     const ok = await addCoins(10000);
     if (ok) {
-      setPromoMsg({ text:'✓ Промокод применён! +10 000 зачислено', err:false });
-      setPromoUsed(true);
-      setPromo('');
-      showToast('+10 000 Z-Coins зачислено!');
+      setPromoMsg({ text:'Промокод применён — +10 000 Z-Coins зачислено', err:false });
+      setPromoUsed(true); setPromo('');
+      showToast('+10 000 Z-Coins зачислено');
     }
   };
 
   const buyTier = async (tier) => {
     setBuying(tier.coins);
     try {
-      const paid = await tryApplePay(tier.coins, tier.price);
-      if (paid) {
-        const ok = await addCoins(tier.coins);
-        if (ok) showToast(`+${tier.coins.toLocaleString()} Z-Coins зачислено!`);
+      if (await tryApplePay(tier.coins, tier.price)) {
+        if (await addCoins(tier.coins)) showToast(`+${tier.coins.toLocaleString()} Z-Coins зачислено`);
       } else {
-        showToast('Apple Pay недоступен на этом устройстве. Используйте промокод.', 'info');
+        showToast('Apple Pay недоступен. Используйте промокод.', 'info');
       }
-    } catch (_) {
-      showToast('Оплата отменена', 'info');
-    }
+    } catch (_) { showToast('Оплата отменена', 'info'); }
     setBuying(null);
   };
 
   return (
-    <div style={{ minHeight:'100%', background:'var(--bg-grad)', paddingBottom:90 }}>
+    <div style={{ minHeight:'100%', background:'#f0f2f8', paddingBottom:88 }}>
 
-      {/* ── Header ── */}
+      {/* ── Hero ── */}
       <div style={{
-        background:'rgba(255,255,255,.88)', backdropFilter:'blur(24px)',
-        padding:'52px 20px 20px', borderBottom:'1px solid rgba(90,120,220,.1)',
-        position:'sticky', top:0, zIndex:10,
+        background:'linear-gradient(160deg,#0f1229 0%,#1e2d6b 55%,#142054 100%)',
+        padding:'56px 24px 36px',
+        display:'flex', flexDirection:'column', alignItems:'center',
+        position:'relative', overflow:'hidden',
       }}>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <div>
-            <h1 style={{
-              fontSize:28, fontWeight:800, letterSpacing:'-.5px',
-              background:'linear-gradient(135deg,#d97706,#f59e0b)',
-              WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
-            }}>Магазин</h1>
-            <div style={{ fontSize:13, color:'var(--text-muted)', marginTop:2 }}>Пополнение Z-Coins</div>
-          </div>
-          <ZBadge n={balance} />
+        {/* Ambient glow */}
+        <div style={{
+          position:'absolute', width:320, height:320, borderRadius:'50%',
+          background:'radial-gradient(circle,rgba(245,158,11,.18) 0%,transparent 70%)',
+          top:'50%', left:'50%', transform:'translate(-50%,-50%)',
+          pointerEvents:'none',
+        }}/>
+        <div style={{
+          position:'absolute', width:180, height:180, borderRadius:'50%',
+          background:'radial-gradient(circle,rgba(245,158,11,.25) 0%,transparent 70%)',
+          top:'35%', left:'50%', transform:'translate(-50%,-50%)',
+          pointerEvents:'none',
+        }}/>
+
+        {/* Coin */}
+        <div style={{ position:'relative', marginBottom:18, filter:'drop-shadow(0 8px 24px rgba(245,158,11,.45))' }}>
+          <ZIcon size={80} />
+        </div>
+
+        <h1 style={{ color:'#fff', fontSize:28, fontWeight:900, margin:0, letterSpacing:'-.5px' }}>
+          Z-Coins
+        </h1>
+        <p style={{ color:'rgba(255,255,255,.5)', fontSize:14, margin:'6px 0 0', fontWeight:500 }}>
+          Внутренняя валюта Zoomy
+        </p>
+
+        {/* Balance pill */}
+        <div style={{
+          marginTop:22,
+          background:'rgba(255,255,255,.09)',
+          border:'1px solid rgba(255,255,255,.14)',
+          borderRadius:24, padding:'11px 22px',
+          display:'flex', alignItems:'center', gap:9,
+          backdropFilter:'blur(12px)',
+        }}>
+          <ZIcon size={20}/>
+          <span style={{ color:'#fff', fontWeight:900, fontSize:19, letterSpacing:'-.3px' }}>
+            {balance.toLocaleString()}
+          </span>
+          <span style={{ color:'rgba(255,255,255,.45)', fontSize:13, fontWeight:600 }}>
+            на балансе
+          </span>
         </div>
       </div>
 
       <div style={{ padding:'20px 16px 0' }}>
 
-        {/* ── Promo code ── */}
+        {/* ── Section label ── */}
         <div style={{
-          background:'rgba(255,255,255,.88)', backdropFilter:'blur(16px)',
-          borderRadius:22, padding:'18px 18px',
-          border:'1.5px solid rgba(90,120,220,.12)', marginBottom:20,
+          fontSize:12, fontWeight:700, color:'#7a82a8',
+          textTransform:'uppercase', letterSpacing:'.08em',
+          marginBottom:10, marginLeft:6,
         }}>
-          <div style={{ fontSize:13, fontWeight:800, color:'var(--text-muted)',
-            textTransform:'uppercase', letterSpacing:'.07em', marginBottom:12 }}>
-            🎁 Промокод
-          </div>
-          <div style={{ display:'flex', gap:10 }}>
-            <input
-              value={promo}
-              onChange={e => { setPromo(e.target.value.toUpperCase()); setPromoMsg(null); }}
-              placeholder="Введите промокод"
-              maxLength={20}
-              style={{
-                flex:1, background:'var(--surface-2)', border:'1.5px solid var(--border)',
-                borderRadius:14, padding:'12px 16px', color:'var(--text)', outline:'none',
-                fontWeight:700, letterSpacing:'.06em', fontSize:15, transition:'border-color .2s',
-              }}
-              onFocus={e => e.target.style.borderColor='var(--accent)'}
-              onBlur={e => e.target.style.borderColor=''}
-              onKeyDown={e => e.key === 'Enter' && applyPromo()}
-            />
-            <button onClick={applyPromo} style={{
-              background:'linear-gradient(135deg,#4a7cf7,#7b5cf0)',
-              color:'#fff', border:'none', borderRadius:14,
-              padding:'12px 20px', fontWeight:700, fontSize:14, cursor:'pointer',
-              boxShadow:'0 4px 14px rgba(74,124,247,.3)', transition:'transform .15s',
-            }}
-              onMouseEnter={e => e.currentTarget.style.transform='scale(1.04)'}
-              onMouseLeave={e => e.currentTarget.style.transform=''}
-            >
-              Применить
-            </button>
-          </div>
-          {promoMsg && (
-            <div style={{
-              marginTop:10, fontSize:13, fontWeight:600,
-              color: promoMsg.err ? '#ef4444' : '#16a34a',
-            }}>
-              {promoMsg.text}
-            </div>
-          )}
+          Пополнение
         </div>
 
-        {/* ── Tiers label ── */}
-        <div style={{ fontSize:13, fontWeight:800, color:'var(--text-muted)',
-          textTransform:'uppercase', letterSpacing:'.07em', marginBottom:12 }}>
-          💳 Пополнение через Apple Pay
-        </div>
-
-        {/* ── Tier grid ── */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:24 }}>
-          {TIERS.map(tier => (
-            <button key={tier.coins} onClick={() => buyTier(tier)}
-              disabled={buying === tier.coins}
-              style={{
-                background: tier.popular
-                  ? 'linear-gradient(135deg,#4a7cf7,#7b5cf0)'
-                  : 'rgba(255,255,255,.88)',
-                backdropFilter:'blur(12px)',
-                border: tier.popular ? 'none' : '1.5px solid rgba(90,120,220,.12)',
-                borderRadius:20, padding:'18px 14px',
-                cursor:'pointer', position:'relative', overflow:'hidden',
-                boxShadow: tier.popular ? '0 6px 24px rgba(74,124,247,.35)' : '0 2px 12px rgba(74,124,247,.07)',
-                transition:'transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s',
-                opacity: buying && buying !== tier.coins ? .6 : 1,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform='scale(1.04)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform=''; }}
-            >
-              {tier.popular && (
-                <div style={{
-                  position:'absolute', top:10, right:10,
-                  background:'rgba(255,255,255,.25)', borderRadius:10,
-                  padding:'2px 8px', fontSize:10, fontWeight:800,
-                  color:'#fff', letterSpacing:'.04em',
-                }}>ВЫГОДНО</div>
+        {/* ── Tiers list ── */}
+        <div style={{
+          background:'#fff', borderRadius:22,
+          overflow:'hidden', boxShadow:'0 2px 24px rgba(0,0,0,.07)',
+        }}>
+          {TIERS.map((tier, idx) => (
+            <div key={tier.coins}>
+              {idx > 0 && (
+                <div style={{ height:1, background:'rgba(0,0,0,.055)', margin:'0 70px 0 82px' }}/>
               )}
-
-              {/* Coin amount */}
-              <div style={{
-                fontSize:26, fontWeight:900, letterSpacing:'-.5px',
-                color: tier.popular ? '#fff' : 'var(--text)', marginBottom:2,
-              }}>
-                {tier.coins >= 1000 ? (tier.coins/1000)+'K' : tier.coins}
-              </div>
-              <div style={{
-                fontSize:11, fontWeight:700, letterSpacing:'.06em',
-                color: tier.popular ? 'rgba(255,255,255,.8)' : 'var(--text-muted)',
-                marginBottom:12,
-              }}>
-                🪙 Z-COINS
-              </div>
-
-              {/* Price pill */}
-              <div style={{
-                background: tier.popular ? 'rgba(255,255,255,.2)' : 'var(--surface-2)',
-                borderRadius:12, padding:'8px',
-                display:'flex', alignItems:'center', justifyContent:'center', gap:6,
-              }}>
-                <svg width="15" height="15" viewBox="0 0 814 1000" fill={tier.popular ? '#fff' : '#555'}>
-                  <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.5-155.5-127.4C46 790.7 0 663.7 0 541.8c0-207.5 135.4-317.3 269-317.3 71 0 130.5 46.4 175 46.4 42.5 0 109.2-49 191.3-49 30.8 0 130.5 2.6 198.3 99.2zm-234-181.5c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.5 32.4-55.1 83.6-55.1 135.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.5-71.3z"/>
-                </svg>
-                <span style={{
-                  fontWeight:800, fontSize:14,
-                  color: tier.popular ? '#fff' : 'var(--text)',
+              <button
+                onClick={() => buyTier(tier)}
+                disabled={!!buying}
+                style={{
+                  width:'100%', display:'flex', alignItems:'center', gap:14,
+                  padding:'13px 18px 13px 14px',
+                  background: tier.popular ? 'linear-gradient(95deg,rgba(74,124,247,.07),rgba(123,92,240,.07))' : 'transparent',
+                  border:'none', cursor: buying ? 'not-allowed' : 'pointer',
+                  textAlign:'left',
+                  opacity: buying && buying !== tier.coins ? .45 : 1,
+                  transition:'opacity .18s, background .18s',
+                }}
+                onMouseEnter={e => !buying && (e.currentTarget.style.background = tier.popular ? 'linear-gradient(95deg,rgba(74,124,247,.12),rgba(123,92,240,.12))' : 'rgba(0,0,0,.03)')}
+                onMouseLeave={e => e.currentTarget.style.background = tier.popular ? 'linear-gradient(95deg,rgba(74,124,247,.07),rgba(123,92,240,.07))' : 'transparent'}
+              >
+                {/* Left icon */}
+                <div style={{
+                  width:52, height:52, borderRadius:16, flexShrink:0,
+                  background: tier.popular
+                    ? 'linear-gradient(135deg,#4a7cf7,#7b5cf0)'
+                    : 'linear-gradient(135deg,rgba(245,158,11,.15),rgba(245,158,11,.08))',
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  boxShadow: tier.popular ? '0 4px 14px rgba(74,124,247,.28)' : 'none',
                 }}>
-                  {buying === tier.coins ? '…' : `${tier.price.toLocaleString()} ₽`}
-                </span>
-              </div>
-            </button>
+                  <ZIcon size={26}/>
+                </div>
+
+                {/* Text */}
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:7, flexWrap:'wrap' }}>
+                    <span style={{ fontWeight:800, fontSize:16, color:'#12152a' }}>
+                      {tier.coins >= 1000 ? (tier.coins / 1000) + 'K' : tier.coins}
+                      {' '}Z-Coins
+                    </span>
+                    {tier.popular && (
+                      <span style={{
+                        background:'linear-gradient(135deg,#4a7cf7,#7b5cf0)',
+                        color:'#fff', fontSize:10, fontWeight:800,
+                        borderRadius:8, padding:'2px 8px', letterSpacing:'.05em',
+                        flexShrink:0,
+                      }}>
+                        ВЫГОДНО
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize:12, color:'#9098c0', marginTop:2, fontWeight:500 }}>
+                    {(tier.price / tier.coins * 100).toFixed(1)} ₽ за 100 монет
+                  </div>
+                </div>
+
+                {/* Price + arrow */}
+                <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+                  <div style={{
+                    fontWeight:800, fontSize:16,
+                    color: tier.popular ? '#4a7cf7' : '#12152a',
+                  }}>
+                    {buying === tier.coins ? '…' : tier.price.toLocaleString() + ' ₽'}
+                  </div>
+                  <svg width="7" height="13" viewBox="0 0 7 13" fill="none">
+                    <path d="M1 1l5 5.5L1 12" stroke={tier.popular ? '#7b9cf9' : '#c0c8e0'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </button>
+            </div>
           ))}
         </div>
 
+        {/* ── Promo code ── */}
         <div style={{
-          textAlign:'center', color:'var(--text-muted)', fontSize:12,
-          padding:'0 20px 20px', lineHeight:1.7,
+          fontSize:12, fontWeight:700, color:'#7a82a8',
+          textTransform:'uppercase', letterSpacing:'.08em',
+          margin:'22px 0 10px 6px',
         }}>
-          Оплата через Apple Pay. Средства зачисляются мгновенно.
-          Z-Coins используются для покупки NFT имён и анонимных номеров в Маркетплейсе.
+          Промокод
+        </div>
+        <div style={{
+          background:'#fff', borderRadius:18,
+          boxShadow:'0 2px 24px rgba(0,0,0,.07)',
+          display:'flex', alignItems:'center',
+          padding:'6px 6px 6px 18px', gap:8,
+        }}>
+          <input
+            value={promo}
+            onChange={e => { setPromo(e.target.value.toUpperCase()); setPromoMsg(null); }}
+            placeholder="Введите промокод"
+            maxLength={20}
+            style={{
+              flex:1, border:'none', background:'transparent', outline:'none',
+              fontSize:15, fontWeight:700, color:'#12152a',
+              letterSpacing:'.06em', padding:'10px 0',
+            }}
+            onKeyDown={e => e.key === 'Enter' && applyPromo()}
+          />
+          <button onClick={applyPromo} style={{
+            background:'linear-gradient(135deg,#4a7cf7,#7b5cf0)',
+            color:'#fff', border:'none', borderRadius:14,
+            padding:'12px 20px', fontWeight:700, fontSize:14,
+            cursor:'pointer', flexShrink:0,
+            boxShadow:'0 4px 14px rgba(74,124,247,.3)',
+          }}>
+            Применить
+          </button>
+        </div>
+        {promoMsg && (
+          <div style={{
+            marginTop:8, fontSize:13, fontWeight:600, marginLeft:4,
+            color: promoMsg.err ? '#ef4444' : '#16a34a',
+          }}>
+            {promoMsg.text}
+          </div>
+        )}
+
+        <div style={{
+          textAlign:'center', color:'#a0a8cc', fontSize:12,
+          padding:'20px 16px 4px', lineHeight:1.8,
+        }}>
+          Z-Coins используются для покупки NFT имён и анонимных
+          номеров в Маркетплейсе. Оплата через Apple Pay.
         </div>
       </div>
 
+      {/* ── Toast ── */}
       {toast && (
         <div style={{
           position:'fixed', bottom:90, left:'50%', transform:'translateX(-50%)',
           background:
             toast.type === 'error' ? '#ef4444' :
             toast.type === 'info'  ? '#6b7280' :
-            'linear-gradient(135deg,#d97706,#f59e0b)',
+            'linear-gradient(135deg,#1e2d6b,#4a7cf7)',
           color:'#fff', borderRadius:20, padding:'12px 24px',
           fontWeight:700, fontSize:14, zIndex:999,
-          boxShadow:'0 8px 24px rgba(0,0,0,.2)',
+          boxShadow:'0 8px 24px rgba(0,0,0,.25)',
           animation:'msgPop .25s cubic-bezier(.34,1.4,.64,1)',
           whiteSpace:'nowrap', maxWidth:'90vw', textAlign:'center',
         }}>
