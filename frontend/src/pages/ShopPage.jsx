@@ -58,7 +58,7 @@ function ZBadge({ n }) {
           fontWeight:900, fontSize:17,
           background:'linear-gradient(135deg,#d97706,#b45309)',
           WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
-        }}>{n.toLocaleString()}</span>
+        }}>{(n == null ? 0 : n).toLocaleString()}</span>
         <span style={{ fontSize:10, fontWeight:700, color:'#92400e', marginTop:1, letterSpacing:'.04em' }}>Z-COINS</span>
       </div>
     </div>

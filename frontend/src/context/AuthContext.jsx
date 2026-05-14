@@ -7,7 +7,6 @@ function sanitize(username) {
   return username.replace(/[^a-zA-Z0-9._-]/g, '');
 }
 
-// Race a promise against a timeout so Supabase never hangs forever
 function withTimeout(p, ms = 12_000, msg = 'Сервер не отвечает. Проверьте интернет.') {
   return Promise.race([
     Promise.resolve(p),
@@ -31,8 +30,6 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let settled = false;
     const done = () => { if (!settled) { settled = true; setLoading(false); } };
-
-    // Absolute safety net — never spin more than 12 s
     const timer = setTimeout(done, 12_000);
 
     supabase.auth.getSession()
@@ -56,9 +53,11 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_UP') return;
       if (session) {
-        const profile = await fetchProfile(session.user.id).catch(() => null);
+        // Only set auth from here if it's not already set (login() sets it directly)
+        const profile = await withTimeout(fetchProfile(session.user.id), 10_000)
+          .catch(() => null);
         if (profile?.username) {
-          setAuth({ user: { id: session.user.id, ...profile } });
+          setAuth(prev => prev ? prev : { user: { id: session.user.id, ...profile } });
         }
       } else {
         setAuth(null);
@@ -75,31 +74,43 @@ export function AuthProvider({ children }) {
 
     const { data, error } = await withTimeout(
       supabase.auth.signUp({ email, password }),
-      15_000,
-      'Сервер не отвечает. Проверьте интернет и попробуйте снова.'
+      15_000, 'Сервер не отвечает. Проверьте интернет.'
     );
     if (error) throw new Error(error.message);
     if (!data.user) throw new Error('Не удалось создать аккаунт');
 
     const { error: profileError } = await withTimeout(
       supabase.from('profiles').insert({ id: data.user.id, username: clean }),
-      10_000,
-      'Ошибка создания профиля. Попробуйте снова.'
+      10_000, 'Ошибка создания профиля.'
     );
     if (profileError) throw new Error(profileError.message);
 
+    // Set auth immediately so PrivateRoute doesn't redirect away
     setAuth({ user: { id: data.user.id, username: clean } });
   }, []);
 
   const login = useCallback(async (username, password) => {
     const clean = sanitize(username);
     const email = `${clean}@zoomy.app`;
-    const { error } = await withTimeout(
+
+    const { data, error } = await withTimeout(
       supabase.auth.signInWithPassword({ email, password }),
-      15_000,
-      'Сервер не отвечает. Проверьте интернет и попробуйте снова.'
+      15_000, 'Сервер не отвечает. Проверьте интернет.'
     );
     if (error) throw new Error('Неверное имя пользователя или пароль');
+
+    // Fetch profile and set auth immediately so navigate('/') lands correctly
+    if (data?.user) {
+      try {
+        const profile = await withTimeout(fetchProfile(data.user.id), 10_000);
+        if (profile?.username) {
+          setAuth({ user: { id: data.user.id, ...profile } });
+          return;
+        }
+      } catch (_) {}
+      // Fallback: set minimal auth so the user at least gets past PrivateRoute
+      setAuth({ user: { id: data.user.id, username: clean } });
+    }
   }, []);
 
   const logout = useCallback(async () => {

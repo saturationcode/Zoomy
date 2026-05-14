@@ -5,6 +5,12 @@ import { supabase } from '../lib/supabase.js';
 // ── Z-Coins badge ────────────────────────────────────────────────────────────
 function ZBadge({ n, size = 'md' }) {
   const big = size === 'lg';
+  const amt = n == null ? 0 : Number(n);
+  const label = amt >= 1_000_000
+    ? (amt / 1_000_000).toFixed(1) + 'M'
+    : amt >= 1000
+    ? Math.round(amt / 1000) + 'K'
+    : amt.toLocaleString();
   return (
     <div style={{
       display:'inline-flex', alignItems:'center', gap: big ? 7 : 5,
@@ -20,7 +26,7 @@ function ZBadge({ n, size = 'md' }) {
           background:'linear-gradient(135deg,#d97706,#b45309)',
           WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
         }}>
-          {n >= 1000 ? (n >= 1_000_000 ? (n/1_000_000).toFixed(1)+'M' : Math.round(n/1000)+'K') : n.toLocaleString()}
+          {label}
         </span>
         {big && <span style={{ fontSize:9, fontWeight:700, color:'#92400e', marginTop:1, letterSpacing:'.05em' }}>Z-COINS</span>}
       </div>
@@ -204,8 +210,7 @@ export default function MarketplacePage() {
       setNumbers(n.data || []);
       setOwnedN(new Set((n.data || []).filter(x => x.owner_id === auth.user.id).map(x => x.id)));
       if (p.data) { setMyCoins(p.data.z_coins || 0); auth.user.z_coins = p.data.z_coins || 0; }
-      setLoading(false);
-    });
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [auth.user.id]);
 
   const showToast = (msg, type = 'success') => {
