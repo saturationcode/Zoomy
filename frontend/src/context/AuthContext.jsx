@@ -43,7 +43,7 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(async (username, password) => {
     const clean = sanitize(username);
-    if (clean.length < 3) throw new Error('Имя пользователя должно содержать минимум 3 буквы/цифры');
+    if (clean.length < 2) throw new Error('Имя пользователя слишком короткое (минимум 2 символа)');
     const email = `${clean}@zoomy.app`;
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw new Error(error.message);

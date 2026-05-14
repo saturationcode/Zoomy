@@ -55,7 +55,7 @@ export default function RegisterPage() {
               name="username"
               value={form.username}
               onChange={handle}
-              placeholder="username (3–32 символа)"
+              placeholder="username (2–32 символа)"
               autoComplete="username"
               autoFocus
             />
