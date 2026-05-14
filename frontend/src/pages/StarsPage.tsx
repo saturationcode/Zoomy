@@ -147,6 +147,7 @@ function TierCard({ stars, price, label, popular, bonus, index, onBuy }: TierCar
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06 }}
       whileTap={{ scale: 0.96 }}
+      whileHover={{ y: -2, boxShadow: '0 8px 32px rgba(124,58,237,.25)' }}
       onClick={onBuy}
       onMouseDown={() => setPressed(true)}
       onMouseUp={() => setPressed(false)}
