@@ -18,7 +18,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(form.username.trim(), form.password);
-      navigate('/');
+      navigate('/onboarding');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -55,7 +55,7 @@ export default function RegisterPage() {
               name="username"
               value={form.username}
               onChange={handle}
-              placeholder="username (2–32 символа)"
+              placeholder="username (4–32 символа)"
               autoComplete="username"
               autoFocus
             />

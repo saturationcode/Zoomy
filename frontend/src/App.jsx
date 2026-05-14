@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ChatPage from './pages/ChatPage.jsx';
+import OnboardingPage from './pages/OnboardingPage.jsx';
 
 function PrivateRoute({ children }) {
   const { auth, loading } = useAuth();
@@ -19,10 +20,11 @@ function PublicRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-      <Route path="/" element={<PrivateRoute><ChatPage /></PrivateRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/login"       element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/register"    element={<PublicRoute><RegisterPage /></PublicRoute>} />
+      <Route path="/onboarding"  element={<PrivateRoute><OnboardingPage /></PrivateRoute>} />
+      <Route path="/"            element={<PrivateRoute><ChatPage /></PrivateRoute>} />
+      <Route path="*"            element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
