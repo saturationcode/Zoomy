@@ -27,6 +27,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: https://yecjjhdrrzerjohzasyf.supabase.co
           VITE_SUPABASE_ANON_KEY: sb_publishable_eq2d2LRNzl7NBxLoinQjYw_xOq383Gc
+          GITHUB_PAGES: true
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
