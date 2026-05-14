@@ -297,11 +297,15 @@ function PromoSection({ userId }: { userId: string }) {
 
 // ─── Transaction history ──────────────────────────────────────────────────────
 
-function TransactionRow({ tx }: { tx: StarsTransaction }) {
+function TransactionRow({ tx, index }: { tx: StarsTransaction; index: number }) {
   const positive = tx.amount > 0;
 
   return (
-    <div style={{
+    <motion.div
+      initial={{ opacity: 0, x: -16 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.06, type: 'spring', stiffness: 380, damping: 28 }}
+      style={{
       display: 'flex', alignItems: 'center', gap: 12,
       padding: '12px 16px',
       borderBottom: '1px solid rgba(255,255,255,.04)',
@@ -335,7 +339,7 @@ function TransactionRow({ tx }: { tx: StarsTransaction }) {
         {positive ? '+' : ''}{tx.amount.toLocaleString()}
         <span style={{ fontSize: 12, fontWeight: 500, marginLeft: 3, color: '#64748b' }}>★</span>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -474,9 +478,11 @@ export default function StarsPage() {
                   border: '1px solid rgba(255,255,255,.07)',
                   overflow: 'hidden',
                 }}>
-                  {transactions.map(tx => (
-                    <TransactionRow key={tx.id} tx={tx} />
-                  ))}
+                  <AnimatePresence initial={false}>
+                    {transactions.map((tx, i) => (
+                      <TransactionRow key={tx.id} tx={tx} index={i} />
+                    ))}
+                  </AnimatePresence>
                 </div>
               )}
               <div style={{ height: 32 }} />
