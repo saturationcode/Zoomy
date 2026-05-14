@@ -7,7 +7,10 @@ function avatarLetter(name) {
 }
 
 function avatarColor(name) {
-  const colors = ['#2f81f7', '#3fb950', '#d29922', '#f0883e', '#8957e5', '#ec6547'];
+  const colors = [
+    '#4a7cf7', '#7b5cf0', '#30d158', '#ff6b6b',
+    '#ffa500', '#00bcd4', '#e91e63', '#795548',
+  ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
@@ -27,21 +30,42 @@ function formatDate(iso) {
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 }
 
+function Avatar({ name, size = '' }) {
+  const color = avatarColor(name);
+  return (
+    <div className="avatar-wrap">
+      <div
+        className="avatar-glow"
+        style={{ background: color }}
+      />
+      <div
+        className={`avatar${size ? ' ' + size : ''}`}
+        style={{ background: color }}
+      >
+        {avatarLetter(name)}
+      </div>
+    </div>
+  );
+}
+
 export default function ChatPage() {
   const { auth, logout } = useAuth();
   const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState('');
   const [activeUser, setActiveUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const activeUserRef = useRef(null);
 
+  const isMobile = () => window.innerWidth <= 640;
+
   useEffect(() => { activeUserRef.current = activeUser; }, [activeUser]);
 
-  // Load user list
   useEffect(() => {
     supabase.from('profiles')
       .select('id, username')
@@ -50,22 +74,17 @@ export default function ChatPage() {
       .then(({ data }) => setUsers(data || []));
   }, [auth.user.id]);
 
-  // Presence: online users
   useEffect(() => {
     const ch = supabase.channel('online-users');
     ch.on('presence', { event: 'sync' }, () => {
       const state = ch.presenceState();
       setOnlineUsers(Object.values(state).flat().map(p => p.user_id));
-    })
-    .subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await ch.track({ user_id: auth.user.id });
-      }
+    }).subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') await ch.track({ user_id: auth.user.id });
     });
     return () => { supabase.removeChannel(ch); };
   }, [auth.user.id]);
 
-  // Realtime: new messages
   useEffect(() => {
     const ch = supabase.channel('messages-rt')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
@@ -76,10 +95,7 @@ export default function ChatPage() {
           (msg.sender_id === me && msg.receiver_id === other) ||
           (msg.sender_id === other && msg.receiver_id === me);
         if (!isRelevant) return;
-
-        const senderUsername = msg.sender_id === me
-          ? auth.user.username
-          : activeUserRef.current?.username;
+        const senderUsername = msg.sender_id === me ? auth.user.username : activeUserRef.current?.username;
         setMessages(prev => {
           if (prev.some(m => m.id === msg.id)) return prev;
           return [...prev, { ...msg, sender: { username: senderUsername } }];
@@ -89,7 +105,6 @@ export default function ChatPage() {
     return () => { supabase.removeChannel(ch); };
   }, [auth.user.id, auth.user.username]);
 
-  // Load messages for selected conversation
   useEffect(() => {
     if (!activeUser) { setMessages([]); return; }
     setLoadingMsgs(true);
@@ -99,16 +114,22 @@ export default function ChatPage() {
       .select('*, sender:profiles!sender_id(username)')
       .or(`and(sender_id.eq.${me},receiver_id.eq.${other}),and(sender_id.eq.${other},receiver_id.eq.${me})`)
       .order('created_at')
-      .then(({ data }) => {
-        setMessages(data || []);
-        setLoadingMsgs(false);
-      });
+      .then(({ data }) => { setMessages(data || []); setLoadingMsgs(false); });
   }, [activeUser, auth.user.id]);
 
-  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const selectUser = (u) => {
+    setActiveUser(u);
+    if (isMobile()) setShowSidebar(false);
+  };
+
+  const backToSidebar = () => {
+    setShowSidebar(true);
+    setActiveUser(null);
+  };
 
   const sendMessage = useCallback(async () => {
     const content = input.trim();
@@ -123,13 +144,9 @@ export default function ChatPage() {
   }, [input, activeUser, auth.user.id]);
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
 
-  // Group messages by date for dividers
   const grouped = [];
   let lastDate = null;
   for (const msg of messages) {
@@ -138,60 +155,89 @@ export default function ChatPage() {
     grouped.push({ type: 'msg', msg });
   }
 
+  const filteredUsers = users.filter(u =>
+    u.username.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="chat-layout">
-      <aside className="sidebar">
+      {/* Sidebar */}
+      <aside className={`sidebar${isMobile() && !showSidebar ? ' hidden' : ''}`}>
         <div className="sidebar-header">
-          <h2>Zoomy</h2>
+          <h2>Чаты</h2>
           <button className="btn-logout" onClick={logout}>Выйти</button>
         </div>
-        <div className="sidebar-me">
-          <div className="avatar avatar-sm" style={{ background: avatarColor(auth.user.username) }}>
-            {avatarLetter(auth.user.username)}
-          </div>
-          <span><strong>{auth.user.username}</strong> — вы</span>
+
+        <div className="sidebar-search">
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Поиск по юзернейму"
+          />
         </div>
+
+        <div className="sidebar-me">
+          <Avatar name={auth.user.username} size="avatar-sm" />
+          <div className="sidebar-me-info">
+            <div className="sidebar-me-name">{auth.user.username}</div>
+            <div className="sidebar-me-label">Вы</div>
+          </div>
+        </div>
+
         <div className="users-list">
-          <div className="users-list-title">Пользователи</div>
-          {users.length === 0 && (
-            <div style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: 13 }}>
-              Пока никого нет
+          {filteredUsers.length === 0 && (
+            <div style={{ padding: '16px 20px', color: 'var(--text-muted)', fontSize: 13 }}>
+              {search ? 'Никого не найдено' : 'Пока никого нет'}
             </div>
           )}
-          {users.map((u) => (
-            <div
-              key={u.id}
-              className={`user-item${activeUser?.id === u.id ? ' active' : ''}`}
-              onClick={() => setActiveUser(u)}
-            >
-              <div className="avatar avatar-sm" style={{ background: avatarColor(u.username) }}>
-                {avatarLetter(u.username)}
+          {filteredUsers.map((u) => {
+            const isOnline = onlineUsers.includes(u.id);
+            return (
+              <div
+                key={u.id}
+                className={`user-item${activeUser?.id === u.id ? ' active' : ''}`}
+                onClick={() => selectUser(u)}
+              >
+                <div style={{ position: 'relative' }}>
+                  <Avatar name={u.username} size="avatar-sm" />
+                  {isOnline && <span className="online-badge" />}
+                </div>
+                <div className="user-item-info">
+                  <div className="user-item-name">{u.username}</div>
+                  <div className={`user-item-status${isOnline ? ' online-text' : ''}`}>
+                    {isOnline ? '● онлайн' : 'оффлайн'}
+                  </div>
+                </div>
               </div>
-              <span className="user-item-name">{u.username}</span>
-              {onlineUsers.includes(u.id)
-                ? <span className="online-dot" title="Онлайн" />
-                : <span className="offline-dot" title="Оффлайн" />}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </aside>
 
-      <main className="chat-area">
+      {/* Chat area */}
+      <main className={`chat-area${isMobile() && showSidebar ? ' hidden' : ''}`}>
         {!activeUser ? (
           <div className="chat-empty">
             <div className="chat-empty-icon">💬</div>
-            <div>Выберите собеседника слева</div>
+            <div className="chat-empty-text">Выберите собеседника</div>
           </div>
         ) : (
           <>
             <div className="chat-header">
-              <div className="avatar" style={{ background: avatarColor(activeUser.username) }}>
-                {avatarLetter(activeUser.username)}
-              </div>
-              <div>
+              {isMobile() && (
+                <button
+                  onClick={backToSidebar}
+                  style={{
+                    background: 'none', border: 'none', padding: '0 8px 0 0',
+                    color: 'var(--accent)', fontSize: 22, lineHeight: 1, cursor: 'pointer'
+                  }}
+                >‹</button>
+              )}
+              <Avatar name={activeUser.username} size="avatar-lg" />
+              <div className="chat-header-info">
                 <div className="chat-header-name">{activeUser.username}</div>
                 <div className={`chat-header-status${onlineUsers.includes(activeUser.id) ? ' online' : ''}`}>
-                  {onlineUsers.includes(activeUser.id) ? 'онлайн' : 'оффлайн'}
+                  {onlineUsers.includes(activeUser.id) ? '● онлайн' : 'оффлайн'}
                 </div>
               </div>
             </div>
@@ -199,7 +245,7 @@ export default function ChatPage() {
             <div className="messages">
               {loadingMsgs && <div className="spinner" />}
               {!loadingMsgs && messages.length === 0 && (
-                <div style={{ alignSelf: 'center', color: 'var(--text-muted)', fontSize: 13, marginTop: 20 }}>
+                <div style={{ alignSelf: 'center', color: 'var(--text-muted)', fontSize: 14, marginTop: 24 }}>
                   Начните переписку с {activeUser.username}
                 </div>
               )}
@@ -235,7 +281,7 @@ export default function ChatPage() {
                 disabled={!input.trim()}
                 title="Отправить (Enter)"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                 </svg>
               </button>

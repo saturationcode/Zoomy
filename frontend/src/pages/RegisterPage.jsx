@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext.jsx';
 export default function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
-
   const [form, setForm] = useState({ username: '', password: '', confirm: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,12 +14,7 @@ export default function RegisterPage() {
   const submit = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (form.password !== form.confirm) {
-      setError('Пароли не совпадают');
-      return;
-    }
-
+    if (form.password !== form.confirm) { setError('Пароли не совпадают'); return; }
     setLoading(true);
     try {
       await register(form.username.trim(), form.password);
@@ -35,6 +29,19 @@ export default function RegisterPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
+        <div className="auth-logo">
+          <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="18" cy="18" r="16" fill="url(#lg2)" />
+            <path d="M18 10v16M10 18h16" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
+            <defs>
+              <linearGradient id="lg2" x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#4a7cf7"/>
+                <stop offset="1" stopColor="#7b5cf0"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
         <h1>Zoomy</h1>
         <p className="subtitle">Создайте новый аккаунт</p>
 

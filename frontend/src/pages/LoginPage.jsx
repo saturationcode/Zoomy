@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext.jsx';
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,6 +28,19 @@ export default function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
+        <div className="auth-logo">
+          <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="18" cy="18" r="16" fill="url(#lg1)" />
+            <path d="M11 14h14M11 18h10M11 22h12" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/>
+            <defs>
+              <linearGradient id="lg1" x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#4a7cf7"/>
+                <stop offset="1" stopColor="#7b5cf0"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
         <h1>Zoomy</h1>
         <p className="subtitle">Войдите в свой аккаунт</p>
 
