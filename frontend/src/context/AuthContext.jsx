@@ -7,6 +7,14 @@ function sanitize(username) {
   return username.replace(/[^a-zA-Z0-9._-]/g, '');
 }
 
+// Race a promise against a timeout so Supabase never hangs forever
+function withTimeout(p, ms = 12_000, msg = 'Сервер не отвечает. Проверьте интернет.') {
+  return Promise.race([
+    Promise.resolve(p),
+    new Promise((_, reject) => setTimeout(() => reject(new Error(msg)), ms)),
+  ]);
+}
+
 async function fetchProfile(userId) {
   const { data } = await supabase
     .from('profiles')
@@ -17,32 +25,38 @@ async function fetchProfile(userId) {
 }
 
 export function AuthProvider({ children }) {
-  const [auth, setAuth] = useState(null);
+  const [auth,    setAuth]    = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const done = () => setLoading(false);
+    let settled = false;
+    const done = () => { if (!settled) { settled = true; setLoading(false); } };
 
-    // 10-second timeout so the spinner never freezes on slow connections
-    const timer = setTimeout(done, 10_000);
+    // Absolute safety net — never spin more than 12 s
+    const timer = setTimeout(done, 12_000);
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      clearTimeout(timer);
-      if (session) {
-        const profile = await fetchProfile(session.user.id);
-        if (profile?.username) {
-          setAuth({ user: { id: session.user.id, ...profile } });
-        } else {
-          await supabase.auth.signOut();
+    supabase.auth.getSession()
+      .then(async ({ data: { session } }) => {
+        if (session) {
+          try {
+            const profile = await withTimeout(fetchProfile(session.user.id));
+            if (profile?.username) {
+              setAuth({ user: { id: session.user.id, ...profile } });
+            } else {
+              await supabase.auth.signOut().catch(() => {});
+            }
+          } catch (_) {
+            await supabase.auth.signOut().catch(() => {});
+          }
         }
-      }
-      done();
-    }).catch(() => { clearTimeout(timer); done(); });
+      })
+      .catch(() => {})
+      .finally(() => { clearTimeout(timer); done(); });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_UP') return;
       if (session) {
-        const profile = await fetchProfile(session.user.id);
+        const profile = await fetchProfile(session.user.id).catch(() => null);
         if (profile?.username) {
           setAuth({ user: { id: session.user.id, ...profile } });
         }
@@ -59,13 +73,19 @@ export function AuthProvider({ children }) {
     if (clean.length < 4) throw new Error('Минимум 4 символа в имени пользователя');
     const email = `${clean}@zoomy.app`;
 
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await withTimeout(
+      supabase.auth.signUp({ email, password }),
+      15_000,
+      'Сервер не отвечает. Проверьте интернет и попробуйте снова.'
+    );
     if (error) throw new Error(error.message);
     if (!data.user) throw new Error('Не удалось создать аккаунт');
 
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({ id: data.user.id, username: clean });
+    const { error: profileError } = await withTimeout(
+      supabase.from('profiles').insert({ id: data.user.id, username: clean }),
+      10_000,
+      'Ошибка создания профиля. Попробуйте снова.'
+    );
     if (profileError) throw new Error(profileError.message);
 
     setAuth({ user: { id: data.user.id, username: clean } });
@@ -74,12 +94,16 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (username, password) => {
     const clean = sanitize(username);
     const email = `${clean}@zoomy.app`;
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await withTimeout(
+      supabase.auth.signInWithPassword({ email, password }),
+      15_000,
+      'Сервер не отвечает. Проверьте интернет и попробуйте снова.'
+    );
     if (error) throw new Error('Неверное имя пользователя или пароль');
   }, []);
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut().catch(() => {});
     setAuth(null);
   }, []);
 
