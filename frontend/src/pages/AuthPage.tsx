@@ -129,7 +129,11 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
         className="btn-primary"
         type="submit"
         disabled={loading || !username.trim() || !password}
-        style={{ marginTop: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+        style={{
+          marginTop: 4,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          transition: 'opacity .25s ease, transform .15s ease, box-shadow .25s ease',
+        }}
       >
         {loading ? <><Spinner /><span>Signing in…</span></> : 'Continue'}
       </button>
@@ -323,7 +327,11 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         className="btn-primary"
         type="submit"
         disabled={loading || !username || !!usernameError || password.length < 8 || password !== confirm}
-        style={{ marginTop: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+        style={{
+          marginTop: 4,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          transition: 'opacity .25s ease, transform .15s ease, box-shadow .25s ease',
+        }}
       >
         {loading ? <><Spinner /><span>Creating account…</span></> : 'Create account'}
       </button>
