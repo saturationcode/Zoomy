@@ -69,15 +69,16 @@ export default function Modal({ open, onClose, title, children, width = 480 }: M
             role="dialog"
             aria-modal
             aria-label={title}
-            initial={{ opacity: 0, scale: 0.92, translateY: 'calc(-50% + 18px)' }}
-            animate={{ opacity: 1, scale: 1,    translateY: '-50%'              }}
-            exit={{   opacity: 0, scale: 0.92,  translateY: 'calc(-50% + 18px)' }}
+            initial={{ opacity: 0, scale: 0.92, y: 18 }}
+            animate={{ opacity: 1, scale: 1,    y: 0   }}
+            exit={{   opacity: 0, scale: 0.92,  y: 18  }}
             transition={{ type: 'spring', stiffness: 380, damping: 30 }}
             style={{
               position: 'fixed',
               top: '50%',
               left: '50%',
-              translateX: '-50%',
+              /* CSS transform for centering; framer appends its own y translate */
+              transform: 'translate(-50%, -50%)',
               zIndex: 61,
               width: '92%',
               maxWidth: width,
