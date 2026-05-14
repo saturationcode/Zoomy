@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useChatStore } from '../../store/chatStore';
 import { useUIStore } from '../../store/uiStore';
+import { useStarsStore } from '../../store/starsStore';
 import { supabase } from '../../lib/supabase';
 import type { Chat, Profile } from '../../types';
 import {
@@ -13,6 +15,7 @@ import {
   IconSettings,
   IconGroup,
   IconGhost,
+  IconStar,
 } from '../icons';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -604,12 +607,72 @@ function NewChatModal({ myId, onClose, onChatCreated }: NewChatModalProps) {
   );
 }
 
+// ─── SidebarNavBtn ────────────────────────────────────────────────────────────
+
+function SidebarNavBtn({
+  active, onClick, label, children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '9px 12px',
+        borderRadius: 12,
+        border: 'none',
+        cursor: 'pointer',
+        background: active
+          ? 'linear-gradient(135deg, rgba(124,58,237,.18), rgba(37,99,235,.12))'
+          : 'transparent',
+        color: active ? '#a78bfa' : '#475569',
+        fontSize: 13,
+        fontWeight: active ? 600 : 500,
+        transition: 'background .15s, color .15s',
+        textAlign: 'left',
+      }}
+      onMouseEnter={e => {
+        if (!active) {
+          (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,.04)';
+          (e.currentTarget as HTMLButtonElement).style.color = '#94a3b8';
+        }
+      }}
+      onMouseLeave={e => {
+        if (!active) {
+          (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+          (e.currentTarget as HTMLButtonElement).style.color = '#475569';
+        }
+      }}
+    >
+      {children}
+      <span style={{ flex: 1 }}>{label}</span>
+      {active && (
+        <div style={{
+          width: 6, height: 6, borderRadius: '50%',
+          background: 'linear-gradient(135deg, #7c3aed, #38bdf8)',
+          flexShrink: 0,
+        }} />
+      )}
+    </button>
+  );
+}
+
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
 export default function Sidebar() {
   const { profile } = useAuthStore();
   const { chats, activeChatId, loadChats, selectChat, loadingChats } = useChatStore();
   const { newChatOpen, openNewChat, closeNewChat, openProfileSheet, openSettings } = useUIStore();
+  const { balance } = useStarsStore();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [search, setSearch] = useState('');
 
@@ -795,68 +858,70 @@ export default function Sidebar() {
         </div>
 
         {/* ── Bottom nav ── */}
-        <div
-          style={{
-            height: 64,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-around',
-            padding: '0 8px',
-            borderTop: '1px solid rgba(255,255,255,0.05)',
-            flexShrink: 0,
-          }}
-        >
-          {/* Contacts / Groups placeholder */}
-          <button
-            className="btn-ghost"
-            style={{ padding: 10, borderRadius: 12, color: '#475569', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flex: 1 }}
-            title="Contacts"
+        <div style={{
+          borderTop: '1px solid rgba(255,255,255,.05)',
+          flexShrink: 0,
+          padding: '8px 8px 10px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}>
+          {/* Marketplace */}
+          <SidebarNavBtn
+            active={location.pathname === '/market'}
+            onClick={() => navigate('/market')}
+            label="Marketplace"
           >
-            <IconGroup size={20} />
-          </button>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V6L18 2H6Z"/>
+              <path d="M3 6H21"/>
+              <path d="M16 10C16 11.0609 15.5786 12.0783 14.8284 12.8284C14.0783 13.5786 13.0609 14 12 14C10.9391 14 9.92172 13.5786 9.17157 12.8284C8.42143 12.0783 8 11.0609 8 10"/>
+            </svg>
+          </SidebarNavBtn>
 
-          {/* Settings */}
-          <button
-            className="btn-ghost"
-            onClick={openSettings}
-            style={{ padding: 10, borderRadius: 12, color: '#475569', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flex: 1 }}
-            title="Settings"
+          {/* Stars */}
+          <SidebarNavBtn
+            active={location.pathname === '/stars'}
+            onClick={() => navigate('/stars')}
+            label={`Stars · ${balance.toLocaleString()} ★`}
           >
-            <IconSettings size={20} />
-          </button>
+            <IconStar size={18} />
+          </SidebarNavBtn>
 
-          {/* Own profile avatar */}
-          <button
-            onClick={() => profile && openProfileSheet(profile.id)}
-            style={{
-              padding: 8,
-              borderRadius: 12,
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flex: 1,
-              transition: 'background 0.15s',
-            }}
-            title="Your profile"
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-          >
-            {profile ? (
-              <Avatar profile={profile} size={32} online />
-            ) : (
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.08)',
-                }}
-              />
-            )}
-          </button>
+          {/* Divider */}
+          <div style={{ height: 1, background: 'rgba(255,255,255,.05)', margin: '4px 0' }} />
+
+          {/* Settings + Profile row */}
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button
+              className="btn-ghost"
+              onClick={openSettings}
+              style={{ flex: 1, padding: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12 }}
+              title="Settings"
+            >
+              <IconSettings size={18} />
+            </button>
+
+            <button
+              onClick={() => profile && openProfileSheet(profile.id)}
+              style={{
+                flex: 1, padding: '8px 0', borderRadius: 12,
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background .15s',
+              }}
+              title="Your profile"
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.04)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              {profile ? (
+                <Avatar profile={profile} size={28} online />
+              ) : (
+                <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,.08)' }} />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 

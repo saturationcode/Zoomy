@@ -114,12 +114,19 @@ function ChatPane({ chatId }: { chatId: string }) {
 export default function ChatsPage() {
   const { profile } = useAuthStore();
   const { activeChatId, loadChats } = useChatStore();
-  const { sidebarOpen, setSidebarOpen, profileSheetOpen } = useUIStore();
+  const { sidebarOpen, setSidebarOpen, profileSheetOpen, openProfileSheet } = useUIStore();
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   useEffect(() => {
     if (profile?.id) loadChats(profile.id);
+  }, [profile?.id]);
+
+  // Слушаем событие открытия профиля из BottomTabBar
+  useEffect(() => {
+    const handler = () => { if (profile) openProfileSheet(profile.id); };
+    window.addEventListener('lighty:open-profile', handler);
+    return () => window.removeEventListener('lighty:open-profile', handler);
   }, [profile?.id]);
 
   // On mobile: show sidebar OR chat, not both
