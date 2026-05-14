@@ -10,7 +10,7 @@ function sanitize(username) {
 async function fetchProfile(userId) {
   const { data } = await supabase
     .from('profiles')
-    .select('username')
+    .select('username, nickname, phone, avatar_color, avatar_url')
     .eq('id', userId)
     .single();
   return data;
@@ -21,27 +21,24 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Restore session on page load
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
         const profile = await fetchProfile(session.user.id);
         if (profile?.username) {
-          setAuth({ user: { id: session.user.id, username: profile.username } });
+          setAuth({ user: { id: session.user.id, ...profile } });
         } else {
-          // Profile missing — sign out to avoid broken state
           await supabase.auth.signOut();
         }
       }
       setLoading(false);
     });
 
-    // Listen for sign-in/sign-out (but skip SIGNED_UP — handled manually in register)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_UP') return;
       if (session) {
         const profile = await fetchProfile(session.user.id);
         if (profile?.username) {
-          setAuth({ user: { id: session.user.id, username: profile.username } });
+          setAuth({ user: { id: session.user.id, ...profile } });
         }
       } else {
         setAuth(null);
@@ -65,7 +62,6 @@ export function AuthProvider({ children }) {
       .insert({ id: data.user.id, username: clean });
     if (profileError) throw new Error(profileError.message);
 
-    // Set auth manually after profile is guaranteed to exist
     setAuth({ user: { id: data.user.id, username: clean } });
   }, []);
 
