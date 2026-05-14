@@ -523,3 +523,179 @@ input, textarea { font-family: inherit; font-size: 15px; }
   .messages { padding:14px; }
   .sheet { border-radius:24px 24px 0 0; }
 }
+
+/* ══════════════════════════════════════════
+   PROFILE SHEET
+══════════════════════════════════════════ */
+.profile-sheet {
+  padding-left: 22px;
+  padding-right: 22px;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+.profile-sheet::-webkit-scrollbar { width: 3px; }
+.profile-sheet::-webkit-scrollbar-thumb { background: rgba(100,130,220,.2); border-radius: 2px; }
+
+.profile-av-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.profile-av-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.av-camera-btn {
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4a7cf7, #7b5cf0);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(74,124,247,.4);
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1);
+  z-index: 5;
+}
+.av-camera-btn:hover { transform: scale(1.15); }
+
+.profile-id-col {
+  flex: 1;
+  min-width: 0;
+  padding-top: 6px;
+}
+.profile-displayname {
+  font-size: 20px; font-weight: 800; color: var(--text);
+  letter-spacing: -.3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.profile-username {
+  font-size: 13px; color: var(--text-muted); margin-top: 2px;
+}
+.profile-zid-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: linear-gradient(135deg, rgba(74,124,247,.1), rgba(123,92,240,.1));
+  border: 1px solid rgba(74,124,247,.18);
+  border-radius: 20px; padding: 4px 10px;
+  font-size: 12px; font-weight: 700; color: var(--accent);
+  letter-spacing: .04em;
+  margin-top: 8px;
+}
+.zid-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--online);
+  box-shadow: 0 0 0 2px rgba(34,197,94,.25);
+}
+.btn-remove-av {
+  margin-top: 8px;
+  background: none; border: none;
+  color: var(--danger); font-size: 12px; font-weight: 600;
+  cursor: pointer; padding: 0;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+
+/* Fields */
+.profile-fields {
+  display: flex; flex-direction: column; gap: 10px;
+  margin-bottom: 16px;
+}
+.profile-field {
+  background: var(--surface-2);
+  border-radius: 16px;
+  padding: 12px 16px;
+}
+.profile-field-label {
+  font-size: 10px; font-weight: 800; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .07em;
+  margin-bottom: 5px;
+}
+.profile-field-input {
+  width: 100%; background: none; border: none; outline: none;
+  font-size: 15px; font-weight: 600; color: var(--text);
+  padding: 0;
+}
+.profile-field-input::placeholder { color: #c4cadf; font-weight: 400; }
+
+/* NFT block */
+.nft-block {
+  background: linear-gradient(135deg, rgba(74,124,247,.07), rgba(123,92,240,.07));
+  border: 1px solid rgba(74,124,247,.14);
+  border-radius: 18px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.nft-block-header {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 11px; font-weight: 800; color: var(--accent);
+  text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: 10px;
+}
+.nft-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0;
+  font-size: 14px; font-weight: 600; color: var(--text);
+  border-bottom: 1px solid rgba(74,124,247,.08);
+}
+.nft-item:last-child { border-bottom: none; padding-bottom: 0; }
+.nft-item:first-of-type { padding-top: 0; }
+.nft-tag {
+  font-size: 10px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .06em; padding: 2px 8px; border-radius: 20px;
+  background: rgba(74,124,247,.13); color: var(--accent);
+  flex-shrink: 0;
+}
+.nft-tag-verified {
+  background: linear-gradient(135deg, rgba(74,124,247,.18), rgba(123,92,240,.18));
+  color: var(--accent-2);
+}
+
+/* Color picker */
+.color-picker-block {
+  background: var(--surface-2); border-radius: 18px;
+  padding: 14px 16px; margin-bottom: 14px;
+}
+.cpb-label {
+  font-size: 11px; font-weight: 800; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px;
+}
+
+/* Save button */
+.btn-save-profile {
+  width: 100%;
+  background: linear-gradient(135deg, #4a7cf7, #7b5cf0);
+  color: #fff; border-radius: var(--radius-pill);
+  padding: 14px; font-weight: 700; font-size: 15px;
+  border: none; cursor: pointer; margin-bottom: 10px;
+  box-shadow: 0 5px 18px rgba(74,124,247,.36);
+  transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s;
+}
+.btn-save-profile:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(74,124,247,.46);
+}
+.btn-save-profile:disabled { opacity: .6; cursor: not-allowed; }
+
+.btn-logout-sheet {
+  width: 100%;
+  background: rgba(239,68,68,.08);
+  color: var(--danger); border-radius: var(--radius-pill);
+  padding: 13px; font-weight: 700; font-size: 15px;
+  border: 1.5px solid rgba(239,68,68,.2); cursor: pointer;
+  transition: background .18s, transform .15s;
+}
+.btn-logout-sheet:hover {
+  background: rgba(239,68,68,.14);
+  transform: scale(1.01);
+}
+
+/* img avatar */
+.av img { object-fit: cover; }
+
+/* Btn header avatar */
+.btn-header-avatar {
+  background: none; border: none; padding: 0; cursor: pointer;
+}
